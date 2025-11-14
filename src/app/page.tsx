@@ -1,6 +1,7 @@
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { benefitCards, heroImage, howItWorksSteps } from "@/data/home";
+import { NeuralNetwork } from "@/components/home/neural-network";
+import { benefitCards, howItWorksSteps } from "@/data/home";
 import { marketingNav } from "@/data/navigation";
 
 export default function HomePage() {
@@ -39,11 +40,7 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-          <div
-            className="aspect-square w-full rounded-3xl bg-cover bg-center shadow-xl"
-            style={{ backgroundImage: `url(${heroImage})` }}
-            aria-label="Illustratie van AI en keuzes"
-          />
+          <NeuralNetwork />
         </section>
         <section id="hoe-het-werkt" className="space-y-6">
           <div className="flex flex-col gap-2">
