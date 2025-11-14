@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="nl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Module Detail Pagina - Avans VKM Zoeker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e60000",
+                        "secondary": "#007bff",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111418",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1d232a",
+                        "border-light": "#cccccc",
+                        "border-dark": "#283039",
+                        "text-light": "#333333",
+                        "text-dark": "#e5e7eb",
+                        "text-muted-light": "#6b7280",
+                        "text-muted-dark": "#9dabb9",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 w-full border-b border-solid border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="container mx-auto px-4">
+<div class="flex h-16 items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-text-light dark:text-white text-lg font-bold leading-tight">Avans VKM Zoeker</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Home</a>
+<a class="text-text-light dark:text-white text-sm font-bold leading-normal" href="#">Zoeken</a>
+<a class="text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Mijn Favorieten</a>
+<a class="text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-white text-sm font-medium leading-normal transition-colors" href="#">Over</a>
+</nav>
+<div class="flex items-center gap-2">
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-white/10 text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-white/10 text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined">person</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ml-2" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAbS3iJoeT_9vAV4UEEPlUL39-Op0OP41x6N_C-4Sulqw35PQQOJqS2-FTtafHlNqBvU1DSZHVzpq-GzT2vPv7YpAKhOzpKp9XuRvcPT3bATyY0p6VR4NGfZJm62iIDXHHCrmnoKPCLgbzHfkKVU59wzdPhyxPo3gKWcHqXMbipFYr6jrkZLNgRrQ3b9V5sIhN-EQNIaA9SPQfepIK7uac18JpzVCSAwLoUEKsKMdYRn2pmoboXBrGI6fqhCUld4nOGlPrS6K1YF7hY");'></div>
+</div>
+</div>
+</div>
+</header>
+<main class="container mx-auto flex-grow px-4 py-8">
+<div class="layout-content-container flex flex-col gap-6">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap items-center gap-2">
+<a class="text-secondary text-sm font-medium leading-normal hover:underline" href="#">Home</a>
+<span class="text-text-muted-light dark:text-text-muted-dark text-sm font-medium leading-normal">/</span>
+<a class="text-secondary text-sm font-medium leading-normal hover:underline" href="#">Zoeken</a>
+<span class="text-text-muted-light dark:text-text-muted-dark text-sm font-medium leading-normal">/</span>
+<span class="text-text-light dark:text-white text-sm font-medium leading-normal">AI for Business</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Main Content (Left Column) -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<!-- PageHeading -->
+<div class="flex flex-col gap-2">
+<p class="text-text-light dark:text-white text-4xl font-black leading-tight tracking-tight">AI for Business</p>
+<p class="text-text-muted-light dark:text-text-muted-dark text-lg font-medium">PRJ4</p>
+</div>
+<!-- Tabs -->
+<div class="border-b border-border-light dark:border-border-dark">
+<div class="flex gap-8">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-text-light dark:text-white pb-3 pt-1" href="#">
+<p class="text-sm font-bold">Omschrijving</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-text-muted-light dark:text-text-muted-dark hover:border-primary/50 hover:text-text-light dark:hover:text-white pb-3 pt-1 transition-colors" href="#">
+<p class="text-sm font-bold">Leerdoelen</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-text-muted-light dark:text-text-muted-dark hover:border-primary/50 hover:text-text-light dark:hover:text-white pb-3 pt-1 transition-colors" href="#">
+<p class="text-sm font-bold">Reviews</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-text-muted-light dark:text-text-muted-dark hover:border-primary/50 hover:text-text-light dark:hover:text-white pb-3 pt-1 transition-colors" href="#">
+<p class="text-sm font-bold">Docenten</p>
+</a>
+</div>
+</div>
+<!-- Tab Content -->
+<div class="flex flex-col gap-8 pt-2">
+<!-- Description Section -->
+<div class="flex flex-col gap-4">
+<h3 class="text-xl font-bold text-text-light dark:text-white">Beschrijving van de Module</h3>
+<p class="text-text-light dark:text-text-dark text-base font-normal leading-relaxed">Een uitgebreide samenvatting van de inhoud en het doel van de module. Deze sectie beschrijft de kernconcepten die worden behandeld, de structuur van de cursus en wat studenten kunnen verwachten van de algehele leerervaring. De module 'AI for Business' richt zich op het toepassen van kunstmatige intelligentie in een zakelijke context, waarbij de focus ligt op praktische implementatie en strategische waardecreatie.</p>
+</div>
+<!-- Prerequisites Section -->
+<div class="flex flex-col gap-4">
+<h3 class="text-xl font-bold text-text-light dark:text-white">Voorkennis</h3>
+<div class="rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-4">
+<ul class="list-disc list-inside space-y-2 text-base">
+<li>Basiskennis van programmeren (bij voorkeur Python).</li>
+<li>Inleidende statistiek en data-analyse.</li>
+<li>Voltooiing van de propedeuse is vereist.</li>
+</ul>
+</div>
+</div>
+<!-- Assessment Section -->
+<div class="flex flex-col gap-4">
+<h3 class="text-xl font-bold text-text-light dark:text-white">Beoordeling</h3>
+<p class="text-text-light dark:text-text-dark text-base font-normal leading-relaxed">De beoordeling voor deze module bestaat uit een combinatie van een praktijkgericht project en een individueel schriftelijk tentamen. Het project telt voor 60% mee en het tentamen voor 40%. Beide onderdelen moeten met een voldoende (5,5 of hoger) worden afgesloten om de module te behalen.</p>
+</div>
+</div>
+</div>
+<!-- Sidebar (Right Column) -->
+<aside class="flex flex-col gap-6">
+<!-- AI Recommendation Tag -->
+<div class="w-full bg-primary/20 text-primary-dark dark:text-primary rounded-lg p-3 flex items-center gap-3 border border-primary/30">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1, 'wght' 700; font-size: 24px;">star</span>
+<p class="font-bold text-sm">Aanbevolen voor jou</p>
+</div>
+<!-- Key Facts Card -->
+<div class="rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 flex flex-col gap-4">
+<h3 class="text-lg font-bold text-text-light dark:text-white">Kerngegevens</h3>
+<div class="flex flex-col gap-3 text-sm">
+<div class="flex justify-between items-center"><span class="text-text-muted-light dark:text-text-muted-dark">ECTS</span><span class="font-semibold text-text-light dark:text-white">15</span></div>
+<div class="flex justify-between items-center"><span class="text-text-muted-light dark:text-text-muted-dark">Periode</span><span class="font-semibold text-text-light dark:text-white">3 &amp; 4</span></div>
+<div class="flex justify-between items-center"><span class="text-text-muted-light dark:text-text-muted-dark">Taal</span><span class="font-semibold text-text-light dark:text-white">Nederlands</span></div>
+<div class="flex justify-between items-center"><span class="text-text-muted-light dark:text-text-muted-dark">Locatie</span><span class="font-semibold text-text-light dark:text-white">Breda</span></div>
+</div>
+</div>
+<!-- Action Block -->
+<div class="flex flex-col gap-3">
+<button class="w-full flex items-center justify-center gap-2 rounded-lg bg-primary h-12 text-white font-bold text-base hover:bg-primary/90 transition-colors">Aanmelden voor module</button>
+<button class="w-full flex items-center justify-center gap-2 rounded-lg bg-secondary/20 dark:bg-secondary/30 h-12 text-secondary font-bold text-base hover:bg-secondary/30 dark:hover:bg-secondary/40 transition-colors">
+<span class="material-symbols-outlined">favorite_border</span>
+                            Opslaan in favorieten
+                        </button>
+</div>
+<!-- Rating Summary -->
+<div class="rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 flex flex-col gap-2">
+<h3 class="text-lg font-bold text-text-light dark:text-white">Studentenbeoordeling</h3>
+<div class="flex items-center gap-2">
+<span class="text-2xl font-bold text-text-light dark:text-white">4.5</span>
+<div class="flex text-yellow-500">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star_half</span>
+</div>
+</div>
+<a class="text-sm text-secondary font-medium hover:underline" href="#">Gebaseerd op 23 reviews</a>
+</div>
+<!-- Related Modules Card -->
+<div class="rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 flex flex-col gap-4">
+<h3 class="text-lg font-bold text-text-light dark:text-white">Gerelateerde Modules</h3>
+<div class="flex flex-col gap-4">
+<a class="block p-3 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="#">
+<p class="font-semibold text-text-light dark:text-white">Data Science Fundamentals</p>
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">PRJ5 - 15 ECTS</p>
+</a>
+<a class="block p-3 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="#">
+<p class="font-semibold text-text-light dark:text-white">Digital Transformation</p>
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">BUS2 - 15 ECTS</p>
+</a>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</main>
+</div>
+</body></html>
