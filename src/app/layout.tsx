@@ -1,30 +1,57 @@
-import type { Metadata } from "next";
-import { Lexend } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
+import { Lexend } from 'next/font/google';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const lexend = Lexend({
-  subsets: ["latin"],
-  variable: "--font-lexend",
-  weight: ["400", "500", "600", "700", "800"],
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
 });
 
 export const metadata: Metadata = {
-  title: "Avans Keuze Kompas",
+  title: 'Avans Keuze Kompas - Vind jouw perfecte Vrije Keuze Module met AI',
   description:
-    "Vind je ideale Avans Vrije Keuze Module dankzij AI-gestuurde aanbevelingen en een moderne zoekervaring.",
+    'Stop met eindeloos zoeken. Krijg persoonlijke aanbevelingen op basis van jouw interesses en studie.',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="nl" className="h-full">
+    <html lang="nl" className="dark">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+        />
+      </head>
       <body
-        className={`${lexend.variable} min-h-full bg-surface text-text antialiased`}
+        className={`${lexend.className} min-h-screen bg-background-light text-text-primary-light dark:bg-background-dark dark:text-text-primary-dark`}
       >
-        {children}
+        {/* Full-screen column layout */}
+        <div className="flex min-h-screen flex-col">
+          {/* Navbar full width */}
+          <Navbar />
+
+          {/* Main content takes remaining height, with max-width container */}
+          <main className="flex-1 w-full">
+            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10">
+              {children}
+            </div>
+          </main>
+
+          {/* Footer full width */}
+          <Footer />
+        </div>
       </body>
     </html>
   );
