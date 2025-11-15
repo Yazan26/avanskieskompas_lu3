@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import NeuralNetworkCanvas from './NeuralNetworkCanvas';
 
 export default function Hero() {
   return (
@@ -76,29 +77,18 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* Image with parallax and float effect */}
+      {/* Interactive neural network visualization */}
       <motion.div
-        className="relative w-full md:min-w-[350px] md:max-w-md lg:max-w-lg"
+        className="relative w-full md:min-w-[360px] md:max-w-xl"
         initial={{ opacity: 0, x: 50, scale: 0.9 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.3 }}
       >
-        <div className="relative aspect-square w-full animate-float">
-          {/* Glow effect */}
-          <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 blur-3xl" />
-          
-          {/* Main image */}
-          <div
-            className="relative h-full w-full overflow-hidden rounded-2xl bg-cover bg-center bg-no-repeat shadow-2xl ring-2 ring-primary/20 transition-transform duration-500 hover:scale-105 hover:ring-primary/40"
-            aria-label="Abstract graphic with interconnected nodes and pathways representing AI and choices"
-            style={{
-              backgroundImage:
-                'url("https://lh3.googleusercontent.com/aida-public/AB6AXuASmsmhMKdl2ZeMDHDHMPsL6YEimhvqtRVyeOz4tBxxXgL5sRdNJQrivG6IvwNTC0GDnGfVOxRABjzaeUsfGQUNsSfRTPtGnp6vUMY2L3IqGN5lzR9lPq6dHsqc3Pw0oh0XPFZ0VPGp-pOaHhRaNG9mORhAZoS0Ww8G2-ZtQczlw5dIYXqj4HbfXCz9MhPtZt9osDcVrHaUOtZm1zZJ3hngNzm7pFwu-Ye4Fw4Ds0pP-hoKzGfDd0lc1-2nll2V_dSOazCjc1dybzdG")',
-            }}
-          >
-            {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <div className="relative flex w-full flex-col items-center gap-6">
+          <div className="absolute inset-0 -z-10 blur-3xl">
+            <div className="h-full w-full rounded-full bg-[radial-gradient(circle_at_top,_rgba(26,111,224,0.6),_transparent_60%)]" />
           </div>
+          <NeuralNetworkCanvas />
         </div>
       </motion.div>
     </section>
