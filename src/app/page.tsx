@@ -1,6 +1,6 @@
-import Hero from '../components/Hero';
-import HowItWorks from '../components/HowItWorks';
-import Benefits from '../components/Benefits';
+import Hero from '../components/home/Hero';
+import HowItWorks from '../components/home/HowItWorks';
+import Benefits from '../components/home/Benefits';
 
 export default function HomePage() {
   return (

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import type { FeatureCard } from '../types/home';
+import type { FeatureCard } from '../../types/home';
 
 const steps: FeatureCard[] = [
   {

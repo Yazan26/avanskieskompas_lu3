@@ -66,10 +66,7 @@ export default function Footer() {
                 </h4>
                 <div className="flex flex-col gap-2">
                   {[
-                    { label: 'Contact', href: '#' },
-                    { label: 'Privacybeleid', href: '#' },
-                    { label: 'Gebruiksvoorwaarden', href: '#' },
-                    { label: 'Avans.nl', href: 'https://avans.nl' },
+                    { label: 'Avans website', href: 'https://avans.nl' },
                   ].map((link) => (
                     <a
                       key={link.label}
@@ -98,22 +95,7 @@ export default function Footer() {
               <span>© {currentYear} Avans Keuze Kompas.</span>
               <span className="hidden md:inline">Alle rechten voorbehouden.</span>
             </p>
-            
-            {/* Social icons placeholder */}
-            <div className="flex items-center gap-4">
-              {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="flex size-9 items-center justify-center rounded-lg border border-border-light bg-foreground-light transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary/10 hover:text-primary dark:border-border-dark dark:bg-foreground-dark"
-                  aria-label={social}
-                >
-                  <span className="material-symbols-outlined text-lg">
-                    {social === 'twitter' ? 'chat' : social === 'facebook' ? 'public' : social === 'instagram' ? 'photo_camera' : 'work'}
-                  </span>
-                </a>
-              ))}
-            </div>
+
           </div>
         </div>
       </div>
