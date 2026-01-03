@@ -78,10 +78,10 @@ export default function Navbar() {
             );
           })}
         </nav>
-        <button className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
+        <Link href="/login" className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
           <span className="relative z-10 truncate">Inloggen</span>
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        </button>
+        </Link>
       </div>
 
       {/* Mobile hamburger */}
@@ -126,9 +126,13 @@ export default function Navbar() {
               </Link>
             );
           })}
-          <button className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg">
+          <Link 
+            href="/login" 
+            onClick={() => setOpen(false)}
+            className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
             Inloggen
-          </button>
+          </Link>
         </nav>
       </div>
     </header>
