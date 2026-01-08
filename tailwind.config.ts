@@ -11,6 +11,9 @@ const config: Config = {
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
       },
+      colors: {
+        'avans-red': '#E4002B',
+      },
     },
   },
   plugins: [],
