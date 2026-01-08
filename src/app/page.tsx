@@ -11,3 +11,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+// Note: This is a Server Component by default in Next.js 13+
