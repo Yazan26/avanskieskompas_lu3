@@ -4,7 +4,7 @@ import Benefits from '../components/home/Benefits';
 
 export default function HomePage() {
   return (
-    <main className="flex-1">
+    <main className="flex-1 w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <Hero />
       <HowItWorks />
       <Benefits />

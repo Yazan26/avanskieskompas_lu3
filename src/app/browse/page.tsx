@@ -1,52 +1,112 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { Metadata } from 'next';
+import { moduleService, userService } from '@/services/userService';
 
-const modules = [
-  {
-    id: 1,
-    title: 'Circular Entrepreneurship',
-    description: 'Learn to build sustainable business models that contribute to a circular economy.',
-    ects: 6,
-    period: 'Period 3',
-    language: 'English',
-    recommendation: "Recommended based on your interest in 'Innovation & Business'.",
-    saved: false,
-  },
-  {
-    id: 2,
-    title: 'Data Science for Business',
-    description: 'Understand how to leverage data to make informed business decisions.',
-    ects: 6,
-    period: 'Period 4',
-    language: 'English',
-    recommendation: "Recommended because you excelled in 'Statistics'.",
-    saved: false,
-  },
-  {
-    id: 3,
-    title: 'Creative Storytelling',
-    description: 'Master the art of narrative to create compelling content for various media.',
-    ects: 6,
-    period: 'Period 3',
-    language: 'Dutch',
-    recommendation: "Recommended for your 'Communication' study profile.",
-    saved: true,
-  },
-];
+interface Module {
+  _id: string; // The backend returns _id from Mongoose
+  id: number;
+  name: string;
+  shortdescription: string;
+  description: string;
+  content: string;
+  studycredit: number;
+  location: string;
+  contact_id: number;
+  level: string;
+  learningoutcomes: string;
+  module_tags: string; // It looks like a stringified array in the example
+  interests_match_score?: number;
+  popularity_score?: number;
+  estimated_difficulty?: number;
+  available_spots?: number;
+  start_date?: string;
+  module_text?: string;
+  
+  // Frontend derived/mocked
+  recommendation?: string;
+  saved?: boolean;
+  period?: string;
+  language?: string;
+  isRecommended?: boolean;
+}
 
 export default function BrowsePage() {
-  const [savedModules, setSavedModules] = useState<number[]>([3]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [savedModules, setSavedModules] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasRecommendations, setHasRecommendations] = useState(false);
 
-  const toggleSave = (id: number) => {
-    setSavedModules(prev => 
-      prev.includes(id) ? prev.filter(moduleId => moduleId !== id) : [...prev, id]
-    );
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [allModules, userProfile] = await Promise.all([
+          moduleService.getAllModules(),
+          userService.getProfile().catch(() => null) // Allow failing if not logged in
+        ]);
+
+        let savedIds: number[] = [];
+        if (userProfile) {
+            setIsLoggedIn(true);
+            if (userProfile.recommendations && userProfile.recommendations.length > 0) {
+                savedIds = userProfile.recommendations;
+                setSavedModules(savedIds);
+                setHasRecommendations(true);
+            }
+        }
+
+        // Add saved status and isRecommended flag to modules
+        const mappedModules = allModules.map((m: Module) => ({
+            ...m,
+            saved: savedIds.includes(m.id),
+            isRecommended: savedIds.includes(m.id),
+            // Mocking these fields for UI consistency as they are missing in backend schema viewed
+            period: 'Period 1-4', 
+            language: m.description && m.description.includes('Dutch') ? 'Dutch' : 'English'
+        }));
+
+        // Sort modules: recommended ones first
+        const sortedModules = mappedModules.sort((a: Module, b: Module) => {
+            if (a.isRecommended && !b.isRecommended) return -1;
+            if (!a.isRecommended && b.isRecommended) return 1;
+            return 0;
+        });
+
+        setModules(sortedModules);
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const toggleSave = async (id: number) => {
+    const isSaved = savedModules.includes(id);
+    try {
+        if (isSaved) {
+            await userService.removeRecommendation(id);
+            setSavedModules(prev => prev.filter(mid => mid !== id));
+        } else {
+            await userService.addRecommendation(id);
+            setSavedModules(prev => [...prev, id]);
+        }
+    } catch (error) {
+        console.error("Failed to update recommendation", error);
+        alert("Failed to update favorite status. Please try again.");
+    }
   };
+
+  const filteredModules = modules.filter(m => 
+    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.shortdescription.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <section className="py-8 md:py-12">
@@ -62,8 +122,7 @@ export default function BrowsePage() {
             Browse Vrije Keuze Modules
           </h1>
           <p className="text-base text-text-secondary-light dark:text-text-secondary-dark md:text-lg">
-            Verken en filter alle beschikbare VKM&apos;s. Aanbevelingen volgen
-            later op basis van jouw profiel.
+            Verken en filter alle beschikbare VKM&apos;s.
           </p>
         </div>
 
@@ -172,100 +231,137 @@ export default function BrowsePage() {
 
         {/* Modules grid */}
         <main className="flex w-full flex-col gap-8">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {modules.map((module, index) => (
+            {/* CTA Banner for logged-in users without recommendations */}
+            {isLoggedIn && !hasRecommendations && !loading && (
               <motion.div
-                key={module.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border-2 border-border-light bg-foreground-light shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark"
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                whileHover={{ y: -10, scale: 1.02 }}
+                className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 p-6 shadow-lg md:p-8"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
               >
-                <div className="flex grow flex-col p-6">
-                  <h3 className="mb-3 text-xl font-bold transition-colors duration-300 group-hover:text-primary">
-                    {module.title}
-                  </h3>
-                  <p className="mb-5 grow text-sm leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
-                    {module.description}
-                  </p>
-                  
-                  {/* Tags */}
-                  <div className="mb-5 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                      {module.ects} ECTS
-                    </span>
-                    <span className="rounded-full bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-500 dark:bg-blue-400/10 dark:text-blue-400">
-                      {module.period}
-                    </span>
-                    <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${module.language === 'English' ? 'bg-green-500/10 text-green-500 dark:bg-green-400/10 dark:text-green-400' : 'bg-purple-500/10 text-purple-500 dark:bg-purple-400/10 dark:text-purple-400'}`}>
-                      {module.language}
-                    </span>
+                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <span className="material-symbols-outlined text-2xl text-primary">auto_awesome</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
+                        Vind jouw perfecte module!
+                      </h3>
+                      <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        Doe onze AI-aanbevelingstest en ontdek welke modules het beste bij jou passen.
+                      </p>
+                    </div>
                   </div>
-                  
-                  {/* AI Recommendation */}
-                  <div className="mb-6 flex items-start gap-3 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 p-4">
-                    <span className="material-symbols-outlined text-xl text-primary">
-                      auto_awesome
-                    </span>
-                    <p className="text-xs leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
-                      {module.recommendation}
-                    </p>
-                  </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-3">
-                    <Link href={`/browse/${module.id}`} className="flex-1">
-                      <button className="group/btn flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold tracking-wide text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
-                        <span>View Details</span>
-                        <span className="material-symbols-outlined text-lg transition-transform duration-300 group-hover/btn:translate-x-1">
-                          arrow_forward
-                        </span>
-                      </button>
-                    </Link>
-                    <button 
-                      onClick={() => toggleSave(module.id)}
-                      className={`flex size-11 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 hover:scale-110 ${
-                        savedModules.includes(module.id)
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border-light text-text-secondary-light hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-border-dark dark:text-text-secondary-dark'
-                      }`}
+                  <Link href="/recommendations">
+                    <motion.button 
+                      className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <span 
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: savedModules.includes(module.id) ? "'FILL' 1" : "'FILL' 0" }}
-                      >
-                        bookmark
-                      </span>
-                    </button>
-                  </div>
+                      <span>Start de Wizard</span>
+                      <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                    </motion.button>
+                  </Link>
                 </div>
               </motion.div>
-            ))}
+            )}
 
-            {/* Loading skeleton */}
-            <motion.div 
-              className="flex animate-pulse flex-col overflow-hidden rounded-2xl border-2 border-border-light bg-foreground-light p-6 dark:border-border-dark dark:bg-foreground-dark"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
-              <div className="mb-3 h-6 w-3/4 rounded-lg bg-gray-200 dark:bg-gray-700" />
-              <div className="mb-5 flex flex-col gap-2">
-                <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-4 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
-              <div className="mb-5 flex flex-wrap gap-2">
-                <div className="h-7 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />
-                <div className="h-7 w-20 rounded-full bg-gray-200 dark:bg-gray-700" />
-              </div>
-              <div className="mb-6 h-16 w-full rounded-xl bg-gray-200 dark:bg-gray-700" />
-              <div className="flex items-center gap-3">
-                <div className="h-11 flex-1 rounded-xl bg-gray-200 dark:bg-gray-700" />
-                <div className="size-11 shrink-0 rounded-xl bg-gray-200 dark:bg-gray-700" />
-              </div>
-            </motion.div>
-          </div>
+            {loading ? (
+                 <motion.div 
+                 className="flex animate-pulse flex-col overflow-hidden rounded-2xl border-2 border-border-light bg-foreground-light p-6 dark:border-border-dark dark:bg-foreground-dark"
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+               >
+                 <div className="mb-3 h-6 w-3/4 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                 <div className="mb-5 flex flex-col gap-2">
+                   <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-700" />
+                   <div className="h-4 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
+                 </div>
+               </motion.div>
+            ) : filteredModules.length === 0 ? (
+                <div className="p-8 text-center text-text-secondary-light dark:text-text-secondary-dark">Geen modules gevonden.</div>
+            ) : (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                {filteredModules.map((module: Module, index: number) => (
+                  <motion.div
+                    key={module.id}
+                    className="group flex flex-col overflow-hidden rounded-2xl border-2 border-border-light bg-foreground-light shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark"
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 * index }}
+                    whileHover={{ y: -10, scale: 1.02 }}
+                  >
+                    <div className="flex grow flex-col p-6">
+                      <h3 className="mb-3 text-xl font-bold transition-colors duration-300 group-hover:text-primary">
+                        {module.name}
+                      </h3>
+                      <p className="mb-5 grow text-sm leading-relaxed text-text-secondary-light dark:text-text-secondary-dark line-clamp-3">
+                        {module.shortdescription}
+                      </p>
+                      
+                      {/* Tags */}
+                      <div className="mb-5 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                          {module.studycredit} ECTS
+                        </span>
+                        {module.location && (
+                           <span className="rounded-full bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-500 dark:bg-blue-400/10 dark:text-blue-400">
+                           {module.location}
+                         </span> 
+                        )}
+                        <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${module.language === 'English' ? 'bg-green-500/10 text-green-500 dark:bg-green-400/10 dark:text-green-400' : 'bg-purple-500/10 text-purple-500 dark:bg-purple-400/10 dark:text-purple-400'}`}>
+                          {module.language || 'Unknown'}
+                        </span>
+                      </div>
+                      
+                      {/* AI Recommendation indicator */}
+                      {module.isRecommended && (
+                        <div className="mb-6 flex items-start gap-3 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 p-4 border border-primary/20">
+                            <span className="material-symbols-outlined text-xl text-primary">
+                            auto_awesome
+                            </span>
+                            <div>
+                              <p className="text-xs font-bold text-primary">Aanbevolen voor jou</p>
+                              <p className="text-xs leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
+                                Op basis van jouw voorkeuren
+                              </p>
+                            </div>
+                        </div>
+                      )}
+                      
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-3">
+                        <Link href={`/browse/${module.id}`} className="flex-1">
+                          <button className="group/btn flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold tracking-wide text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
+                            <span>View Details</span>
+                            <span className="material-symbols-outlined text-lg transition-transform duration-300 group-hover/btn:translate-x-1">
+                              arrow_forward
+                            </span>
+                          </button>
+                        </Link>
+                        <button 
+                          onClick={() => toggleSave(module.id)}
+                          className={`flex size-11 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 hover:scale-110 ${
+                            savedModules.includes(module.id)
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border-light text-text-secondary-light hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-border-dark dark:text-text-secondary-dark'
+                          }`}
+                        >
+                          <span 
+                            className="material-symbols-outlined"
+                            style={{ fontVariationSettings: savedModules.includes(module.id) ? "'FILL' 1" : "'FILL' 0" }}
+                          >
+                            bookmark
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+            </div>
+            )}
+        
 
           {/* Pagination */}
           <motion.div 
@@ -274,29 +370,17 @@ export default function BrowsePage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
           >
-            <button
+            {/* Pagination UI kept for visual structure, functionality dependent on backend support which is currently all-fetch */}
+             <button
               className="flex size-10 items-center justify-center rounded-lg border-2 border-border-light bg-foreground-light text-text-secondary-light transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50 disabled:hover:scale-100 dark:border-border-dark dark:bg-foreground-dark dark:text-text-secondary-dark"
               disabled
             >
               <span className="material-symbols-outlined">chevron_left</span>
             </button>
-            {[1, 2, 3].map((page) => (
-              <button 
-                key={page}
-                className={`flex size-10 items-center justify-center rounded-lg border-2 text-sm font-semibold transition-all duration-300 hover:scale-110 ${
-                  page === 1
-                    ? 'border-primary bg-primary text-white shadow-lg shadow-primary/50'
-                    : 'border-border-light bg-foreground-light text-text-secondary-light hover:border-primary hover:bg-primary/10 hover:text-primary dark:border-border-dark dark:bg-foreground-dark dark:text-text-secondary-dark'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <span className="text-text-secondary-light dark:text-text-secondary-dark">...</span>
-            <button className="flex size-10 items-center justify-center rounded-lg border-2 border-border-light bg-foreground-light text-sm text-text-secondary-light transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary/10 hover:text-primary dark:border-border-dark dark:bg-foreground-dark dark:text-text-secondary-dark">
-              8
+            <button className="flex size-10 items-center justify-center rounded-lg border-2 border-primary bg-primary text-white shadow-lg shadow-primary/50 text-sm font-semibold transition-all duration-300 hover:scale-110">
+                1
             </button>
-            <button className="flex size-10 items-center justify-center rounded-lg border-2 border-border-light bg-foreground-light text-text-secondary-light transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary/10 hover:text-primary dark:border-border-dark dark:bg-foreground-dark dark:text-text-secondary-dark">
+             <button className="flex size-10 items-center justify-center rounded-lg border-2 border-border-light bg-foreground-light text-text-secondary-light transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary/10 hover:text-primary dark:border-border-dark dark:bg-foreground-dark dark:text-text-secondary-dark">
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </motion.div>

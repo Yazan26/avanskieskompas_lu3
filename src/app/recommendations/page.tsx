@@ -1,4 +1,4 @@
-import { RecommendationEngine } from '../../components/recommendations/RecommendationEngine';
+import { RecommendationWizardV2 } from '../../components/recommendations/RecommendationWizardV2';
 
 export const metadata = {
   title: 'AI Recommendations - Avans Kieskompas',
@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function RecommendationsPage() {
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <RecommendationEngine />
+    <main>
+      <RecommendationWizardV2 />
     </main>
   );
 }

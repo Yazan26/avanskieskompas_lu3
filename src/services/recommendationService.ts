@@ -1,77 +1,104 @@
-import { RecommendationRequest, RecommendedModule, Module } from '../types/recommendations';
 
-const DEFAULT_API_URL = 'http://localhost:3000/api/keuzemodules';
+import axios from 'axios';
+import { RecommendedModule, Module } from '../types/recommendations';
 
-export class AIService {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = DEFAULT_API_URL) {
-    this.baseUrl = baseUrl;
-  }
-
-  /**
-   * Fetch all available modules
-   */
-  async getAllModules(): Promise<Module[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/getmodules`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch modules: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching modules:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get AI recommendations based on user interests
-   */
-  async getRecommendations(params: RecommendationRequest): Promise<RecommendedModule[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/getrecommend`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
-
-      if (!response.ok) {
-        // Handle 503 specifically
-        if (response.status === 503) {
-          console.warn('AI Service unavailable, falling back or showing error.');
-          // You might want to try to parse the error body if possible
-          try {
-            const errorData = await response.json();
-            console.error('503 Details:', errorData);
-            throw new Error(errorData.message || 'AI Service is currently unavailable.');
-          } catch (e) {
-            throw new Error('AI Service is currently unavailable (503).');
-          }
-        }
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const data: RecommendedModule[] = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch recommendations:', error);
-      throw error;
-    }
-  }
+export interface RecommendationWeights {
+  text_similarity: number;
+  location: number;
+  tags: number;
+  difficulty: number;
+  popularity: number;
 }
 
-// Export a singleton instance for ease of use
-export const aiService = new AIService();
+export interface RecommendationRequest {
+  interests_text: string;
+  preferred_location?: string;
+  moduletags_include?: string[];
+  min_ec?: number;
+  max_difficulty?: number;
+  weights?: RecommendationWeights;
+  k?: number;
+}
 
-// Backward compatibility (optional, but good if we don't want to break existing imports immediately, 
-// though we will update the consumer in the next step)
-export const fetchRecommendations = (interests: string, location: string) => {
-    return aiService.getRecommendations({
+const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// Helper to get auth header (if user is logged in)
+const getAuthHeader = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    console.log('[recommendationService] Token from localStorage:', token ? 'Present (length: ' + token.length + ')' : 'Not found');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+/**
+ * Fetch all available modules
+ */
+export const getAllModules = async (): Promise<Module[]> => {
+  try {
+    const response = await axios.get(`${DEFAULT_API_URL}/api/recommendations/getmodules`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching modules:', error);
+    return [];
+  }
+};
+
+/**
+ * Get AI recommendations
+ */
+export const fetchRecommendations = async (
+  interests: string, 
+  location: string = '',
+  minEc: number = 0,
+  maxDifficulty: number = 5,
+  tags: string[] = [],
+  weights?: RecommendationWeights
+): Promise<RecommendedModule[]> => {
+  try {
+    const payload: RecommendationRequest = {
         interests_text: interests,
-        preferred_location: location === 'Any' ? undefined : location,
+        preferred_location: location === 'any' ? undefined : location,
+        moduletags_include: tags,
+        min_ec: minEc,
+        max_difficulty: maxDifficulty,
+        weights: weights,
         k: 5
+    };
+
+    if (!payload.preferred_location) delete payload.preferred_location;
+
+    const url = `${DEFAULT_API_URL}/api/recommendations/getrecommend`;
+    const headers = getAuthHeader();
+    console.log('[recommendationService] Calling URL:', url);
+    console.log('[recommendationService] With headers:', JSON.stringify(headers));
+
+    // Include auth header so backend can save recommendations for logged-in users
+    const response = await axios.post(url, payload, { headers });
+    
+    // Log debug info from backend
+    if (response.data._debug) {
+      console.log('[recommendationService] Backend debug info:', response.data._debug);
+    }
+    
+    // Return the recommendations array (handle both old and new response format)
+    return response.data.recommendations || response.data;
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    throw error;
+  }
+};
+
+export const saveRecommendations = async (
+    recommendations: RecommendedModule[],
+    preferences: any
+): Promise<any> => {
+    const header = getAuthHeader();
+    if (Object.keys(header).length === 0) throw new Error('No token found');
+
+    const response = await axios.post(`${DEFAULT_API_URL}/api/recommendations/save`, {
+        recommendations,
+        preferences
+    }, {
+        headers: header
     });
+    return response.data;
 };

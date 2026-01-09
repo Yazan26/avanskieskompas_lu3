@@ -15,6 +15,7 @@ const navLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -23,6 +24,19 @@ export default function Navbar() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Separate effect for checking auth state
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      setIsLoggedIn(!!token);
+    };
+    checkAuth();
+    
+    // Listen for storage changes (e.g., logout in another tab)
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
   return (
@@ -79,10 +93,17 @@ export default function Navbar() {
             );
           })}
         </nav>
-        <Link href="/login" className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
-          <span className="relative z-10 truncate">Inloggen</span>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        </Link>
+        {isLoggedIn ? (
+          <Link href="/profile" className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-accent px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/50">
+            <span className="relative z-10 truncate">Mijn Account</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          </Link>
+        ) : (
+          <Link href="/login" className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
+            <span className="relative z-10 truncate">Inloggen</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          </Link>
+        )}
       </div>
 
       {/* Mobile hamburger */}
@@ -127,13 +148,23 @@ export default function Navbar() {
               </Link>
             );
           })}
-          <Link 
-            href="/login" 
-            onClick={() => setOpen(false)}
-            className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
-          >
-            Inloggen
-          </Link>
+          {isLoggedIn ? (
+            <Link 
+              href="/profile" 
+              onClick={() => setOpen(false)}
+              className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            >
+              Mijn Account
+            </Link>
+          ) : (
+            <Link 
+              href="/login" 
+              onClick={() => setOpen(false)}
+              className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            >
+              Inloggen
+            </Link>
+          )}
         </nav>
       </div>
     </header>

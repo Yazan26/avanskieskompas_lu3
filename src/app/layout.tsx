@@ -42,11 +42,9 @@ export default function RootLayout({
           {/* Navbar full width */}
           <Navbar />
 
-          {/* Main content takes remaining height, with max-width container */}
+          {/* Main content - now full width, pages control their own containers */}
           <main className="flex-1 w-full">
-            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10">
-              {children}
-            </div>
+            {children}
           </main>
 
           {/* Footer full width */}

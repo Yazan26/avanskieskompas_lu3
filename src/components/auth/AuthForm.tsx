@@ -35,13 +35,13 @@ export default function AuthForm() {
     setError(null);
     setSuccess(null);
 
-    const baseUrl = "http://localhost:3000/auth";
-    const endpoint = mode === "login" ? "/login" : "/register";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
     const url = `${baseUrl}${endpoint}`;
 
     const body = mode === "login" 
       ? { email: formData.email, password: formData.password }
-      : { ...formData, role: "user" }; // Default role to user
+      : { ...formData, role: "application" }; // Default role to application for normal users
 
     try {
       const response = await fetch(url, {
@@ -60,8 +60,10 @@ export default function AuthForm() {
         // Handle successful login (store token)
         localStorage.setItem("token", data.token);
         setSuccess("Login successful! Redirecting...");
-        // In a real app, you might redirect here using useRouter
-        // router.push('/dashboard');
+        // Redirect to home page after login
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
       } else {
         setSuccess("Registration successful! Please log in.");
         setTimeout(() => {
