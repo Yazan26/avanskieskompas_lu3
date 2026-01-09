@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, 
@@ -12,7 +12,7 @@ import {
   ChevronLeft, 
   Check,
   BrainCircuit,
-  Sliders,
+
   RefreshCw,
   Settings,
   ArrowRight
@@ -127,10 +127,7 @@ export const RecommendationWizard: React.FC = () => {
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
   };
 
-  const inputVariants = {
-      hidden: { opacity: 0, x: -10 },
-      visible: { opacity: 1, x: 0, transition: { staggerChildren: 0.1 } }
-  };
+
 
   // Render content logic
   const renderContent = () => {
@@ -174,7 +171,7 @@ export const RecommendationWizard: React.FC = () => {
                               Wat wil je leren?
                           </label>
                           <p className="text-gray-500 dark:text-gray-400">
-                              Vertel ons over je interesses, hobby's of carrièreplannen. Hoe meer details, hoe beter de match.
+                              Vertel ons over je interesses, hobby&apos;s of carrièreplannen. Hoe meer details, hoe beter de match.
                           </p>
                       </div>
                       <div className="relative group">
@@ -370,7 +367,7 @@ export const RecommendationWizard: React.FC = () => {
                               <Sparkles className="w-8 h-8 text-avans-red" />
                               Aanbevolen Modules
                           </h2>
-                          <p className="text-gray-500">Gebaseerd op "{interests.substring(0, 30)}..."</p>
+                          <p className="text-gray-500">Gebaseerd op \u0026ldquo;{interests.substring(0, 30)}...\u0026rdquo;</p>
                       </div>
 
                       {loading ? (
@@ -429,7 +426,7 @@ export const RecommendationWizard: React.FC = () => {
         {/* Progress Dots (Only if not intro/results) */}
         {currentStep.id !== 'intro' && (
             <div className="w-full max-w-xl mb-12 flex justify-between items-center px-4">
-                 {STEPS.filter(s => s.id !== 'intro' && s.id !== 'results').map((step, idx) => {
+                 {STEPS.filter(s => s.id !== 'intro' && s.id !== 'results').map((step) => {
                      // Determine index relative to filtered list
                      const actualIdx = STEPS.indexOf(step);
                      const isActive = currentStepIndex === actualIdx;

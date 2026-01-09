@@ -20,6 +20,15 @@ export interface RecommendationRequest {
   k?: number;
 }
 
+export interface SavePreferences {
+    interests: string;
+    location: string;
+    minEc: number;
+    maxDifficulty: number;
+    selectedTags: string[];
+    weights: RecommendationWeights;
+}
+
 const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Helper to get auth header (if user is logged in)
@@ -89,8 +98,8 @@ export const fetchRecommendations = async (
 
 export const saveRecommendations = async (
     recommendations: RecommendedModule[],
-    preferences: any
-): Promise<any> => {
+    preferences: SavePreferences
+): Promise<{ success: boolean; message?: string }> => {
     const header = getAuthHeader();
     if (Object.keys(header).length === 0) throw new Error('No token found');
 

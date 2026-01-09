@@ -26,5 +26,5 @@ export interface Module {
   name: string;
   location?: string;
   description?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

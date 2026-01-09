@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
   MapPin, 
   BookOpen, 
   BarChart2, 
-  Tag, 
+
   Check, 
   ChevronRight,
   Sparkles,
@@ -21,6 +21,13 @@ import { RecommendedModule } from '../../types/recommendations';
 import { RecommendationResultCard } from './RecommendationResultCard';
 
 // ------------ TYPES & CONSTANTS ----------------
+interface RecommendationsResponse {
+    recommendations?: RecommendedModule[];
+    _debug?: {
+        saveSuccess?: boolean;
+        userIdFromMiddleware?: string;
+    };
+}
 const AVAILABLE_TAGS = [
   'Python', 'Data Science', 'AI & Machine Learning', 'Online Marketing', 
   'Concepting', 'Finance', 'Management', 'Duurzaamheid', 'Gezondheid', 
@@ -120,14 +127,15 @@ export const RecommendationWizardV2: React.FC = () => {
             // Check debug info for save status (response comes from service which might wrap it, 
             // but service returns response.data.recommendations OR response.data.
             // Let's rely on the fact that if we get an array, it worked.)
-            if ((data as any)._debug?.saveSuccess) {
+            const typedData = data as RecommendedModule[] | RecommendationsResponse;
+            if (!Array.isArray(typedData) && typedData._debug?.saveSuccess) {
                 setSaveStatus('saved');
-            } else if ((data as any)._debug?.userIdFromMiddleware) {
+            } else if (!Array.isArray(typedData) && typedData._debug?.userIdFromMiddleware) {
                  // User was logged in but save failed
                  setSaveStatus('failed');
             }
 
-            setResults(Array.isArray(data) ? data : (data as any).recommendations || []);
+            setResults(Array.isArray(typedData) ? typedData : typedData.recommendations || []);
 
         } catch (err) {
             console.error(err);

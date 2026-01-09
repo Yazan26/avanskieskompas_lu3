@@ -23,7 +23,7 @@ export const RecommendationEngine: React.FC = () => {
       const data = await fetchRecommendations(interests, location);
       setResults(data);
       setHasSearched(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong while fetching recommendations. Please try again.');
       console.error(err);
     } finally {

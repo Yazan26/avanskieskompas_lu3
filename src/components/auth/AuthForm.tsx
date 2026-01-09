@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle } from "lucide-react";
-import clsx from "clsx";
+
 
 type AuthMode = "login" | "register";
 
@@ -72,8 +72,8 @@ export default function AuthForm() {
           setFormData(prev => ({ ...prev, password: "" })); 
         }, 1500);
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
