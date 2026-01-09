@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { 
   ArrowRight, 
   MapPin, 
@@ -154,21 +154,21 @@ export const RecommendationWizardV2: React.FC = () => {
     };
 
     // Animation Variants
-    const pageVariants = {
-        initial: (direction: number) => ({
+    const pageVariants: Variants = {
+        initial: {
             opacity: 0,
-            y: direction > 0 ? 50 : -50,
-        }),
+            y: 50,
+        },
         animate: {
             opacity: 1,
             y: 0,
-            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+            transition: { duration: 0.5 }
         },
-        exit: (direction: number) => ({
+        exit: {
             opacity: 0,
-            y: direction > 0 ? -50 : 50,
-            transition: { duration: 0.3, ease: "easeIn" }
-        })
+            y: -50,
+            transition: { duration: 0.3 }
+        }
     };
 
     // RENDER STEPS
