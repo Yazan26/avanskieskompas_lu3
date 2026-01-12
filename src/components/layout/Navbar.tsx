@@ -33,19 +33,18 @@ export default function Navbar() {
       setIsLoggedIn(!!token);
     };
     checkAuth();
-    
+
     // Listen for storage changes (e.g., logout in another tab)
     window.addEventListener('storage', checkAuth);
     return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
   return (
-    <header 
-      className={`sticky top-0 z-50 flex w-full items-center justify-between border-b px-4 py-4 backdrop-blur-md transition-all duration-300 sm:px-6 lg:px-10 ${
-        scrolled 
-          ? 'border-primary/20 bg-foreground-light/90 shadow-lg shadow-primary/10 dark:bg-foreground-dark/90' 
-          : 'border-border-light bg-foreground-light/80 dark:border-border-dark dark:bg-foreground-dark/80'
-      }`}
+    <header
+      className={`sticky top-0 z-50 flex w-full items-center justify-between border-b px-4 py-4 backdrop-blur-md transition-all duration-300 sm:px-6 lg:px-10 ${scrolled
+        ? 'border-primary/20 bg-foreground-light/90 shadow-lg shadow-primary/10 dark:bg-foreground-dark/90'
+        : 'border-border-light bg-foreground-light/80 dark:border-border-dark dark:bg-foreground-dark/80'
+        }`}
     >
       {/* Logo + title */}
       <Link href="/" className="flex items-center gap-4 text-text-primary-light transition-transform duration-300 hover:scale-105 dark:text-text-primary-dark">
@@ -84,10 +83,9 @@ export default function Navbar() {
                 <span className={isActive ? 'text-primary' : 'text-text-primary-light dark:text-text-primary-dark'}>
                   {link.label}
                 </span>
-                <span 
-                  className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all duration-300 ${
-                    isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
                 />
               </Link>
             );
@@ -98,7 +96,7 @@ export default function Navbar() {
             <span className="relative z-10 truncate">Mijn Account</span>
             <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           </Link>
-        ) : (
+        ) : pathname !== '/login' && (
           <Link href="/login" className="group relative flex h-11 min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-sm font-bold leading-normal tracking-[0.015em] text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
             <span className="relative z-10 truncate">Inloggen</span>
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -117,10 +115,9 @@ export default function Navbar() {
       </button>
 
       {/* Mobile menu with smooth transition */}
-      <div 
-        className={`absolute left-0 right-0 top-full z-20 overflow-hidden border-b border-border-light bg-foreground-light/95 shadow-xl backdrop-blur-lg transition-all duration-300 dark:border-border-dark dark:bg-foreground-dark/95 md:hidden ${
-          open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        }`}
+      <div
+        className={`absolute left-0 right-0 top-full z-20 overflow-hidden border-b border-border-light bg-foreground-light/95 shadow-xl backdrop-blur-lg transition-all duration-300 dark:border-border-dark dark:bg-foreground-dark/95 md:hidden ${open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
       >
         <nav className="flex flex-col gap-1 p-4">
           {navLinks.map((link, index) => {
@@ -134,11 +131,10 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className={`rounded-lg px-4 py-3 text-sm font-medium transition-all duration-300 ${
-                  isActive
-                    ? 'bg-primary/10 text-primary shadow-sm'
-                    : 'text-text-primary-light hover:bg-primary/5 hover:text-primary dark:text-text-primary-dark'
-                }`}
+                className={`rounded-lg px-4 py-3 text-sm font-medium transition-all duration-300 ${isActive
+                  ? 'bg-primary/10 text-primary shadow-sm'
+                  : 'text-text-primary-light hover:bg-primary/5 hover:text-primary dark:text-text-primary-dark'
+                  }`}
                 style={{
                   animationDelay: `${index * 50}ms`,
                   animation: open ? 'slide-up 0.3s ease-out forwards' : 'none'
@@ -149,16 +145,16 @@ export default function Navbar() {
             );
           })}
           {isLoggedIn ? (
-            <Link 
-              href="/profile" 
+            <Link
+              href="/profile"
               onClick={() => setOpen(false)}
               className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
               Mijn Account
             </Link>
-          ) : (
-            <Link 
-              href="/login" 
+          ) : pathname !== '/login' && (
+            <Link
+              href="/login"
               onClick={() => setOpen(false)}
               className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
