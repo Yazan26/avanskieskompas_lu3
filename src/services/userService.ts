@@ -78,9 +78,22 @@ export const userService = {
     }
 };
 
+
+export interface ModuleFilters {
+    search?: string;
+    location?: string;
+    language?: string;
+    period?: string;
+    sort?: string;
+    limit?: number;
+}
+
 export const moduleService = {
-    getAllModules: async () => {
-        const response = await axios.get(`${API_URL}/api/keuzemodules`);
+    getAllModules: async (filters: ModuleFilters = {}) => {
+        const response = await axios.get(`${API_URL}/api/keuzemodules`, {
+            params: filters
+        });
         return response.data;
     }
 };
+

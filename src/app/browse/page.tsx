@@ -40,8 +40,16 @@ export default function BrowsePage() {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasRecommendations, setHasRecommendations] = useState(false);
-  const [showFilters, setShowFilters] = useState(false); // Collapsed by default on mobile
+  const [showFilters, setShowFilters] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+
+  // Filter keys matching backend expectation
+  const [activeFilters, setActiveFilters] = useState<{
+    location?: string;
+    sort: string;
+  }>({
+    sort: 'recommended'
+  });
 
   // Handle responsive filter visibility
   useEffect(() => {
@@ -55,51 +63,67 @@ export default function BrowsePage() {
     return () => window.removeEventListener('resize', checkIsDesktop);
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [allModules, userProfile] = await Promise.all([
-          moduleService.getAllModules(),
-          userService.getProfile().catch(() => null) // Allow failing if not logged in
-        ]);
+  // Fetch modules with current filters
+  const fetchModules = async () => {
+    setLoading(true);
+    try {
+      // Prepare filters for API
+      const apiFilters: any = {
+        search: searchQuery,
+        sort: activeFilters.sort
+      };
+      
+      if (activeFilters.location) apiFilters.location = activeFilters.location;
 
-        let savedIds: number[] = [];
-        if (userProfile) {
-          setIsLoggedIn(true);
-          if (userProfile.recommendations && userProfile.recommendations.length > 0) {
-            savedIds = userProfile.recommendations;
-            setSavedModules(savedIds);
-            setHasRecommendations(true);
-          }
+      const [allModules, userProfile] = await Promise.all([
+        moduleService.getAllModules(apiFilters),
+        userService.getProfile().catch(() => null)
+      ]);
+
+      let savedIds: number[] = [];
+      if (userProfile) {
+        setIsLoggedIn(true);
+        if (userProfile.recommendations && userProfile.recommendations.length > 0) {
+          savedIds = userProfile.recommendations;
+          setSavedModules(savedIds);
+          setHasRecommendations(true);
         }
-
-        // Add saved status and isRecommended flag to modules
-        const mappedModules = allModules.map((m: Module) => ({
-          ...m,
-          saved: savedIds.includes(m.id),
-          isRecommended: savedIds.includes(m.id),
-          // Mocking these fields for UI consistency as they are missing in backend schema viewed
-          period: 'Period 1-4',
-          language: m.description && m.description.includes('Dutch') ? 'Dutch' : 'English'
-        }));
-
-        // Sort modules: recommended ones first
-        const sortedModules = mappedModules.sort((a: Module, b: Module) => {
-          if (a.isRecommended && !b.isRecommended) return -1;
-          if (!a.isRecommended && b.isRecommended) return 1;
-          return 0;
-        });
-
-        setModules(sortedModules);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchData();
-  }, []);
+      const mappedModules = allModules.map((m: Module) => ({
+        ...m,
+        saved: savedIds.includes(m.id),
+        isRecommended: savedIds.includes(m.id),
+        period: m.period || 'Period 1-4', // Fallback if missing
+        language: m.language || (m.description && m.description.includes('Dutch') ? 'Dutch' : 'English')
+      }));
+
+      setModules(mappedModules);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce search or fetch on effect? 
+  // For simplicity, we fetch on mount and when interactions happen.
+  useEffect(() => {
+    fetchModules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
+
+  // Apply filters handler
+  const handleApplyFilters = () => {
+    fetchModules();
+  };
+
+  // Handle Search on Enter
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      fetchModules();
+    }
+  };
 
   const toggleSave = async (id: number) => {
     const isSaved = savedModules.includes(id);
@@ -117,10 +141,13 @@ export default function BrowsePage() {
     }
   };
 
-  const filteredModules = modules.filter(m =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.shortdescription.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const updateFilter = (category: 'location', value: string) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      // Toggle logic: if already selected, deselect it. Otherwise select it.
+      [category]: prev[category] === value ? undefined : value
+    }));
+  };
 
   return (
     <section className="py-8 md:py-12">
@@ -141,7 +168,7 @@ export default function BrowsePage() {
         </div>
 
         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-          {/* Search input with animation */}
+          {/* Search input */}
           <motion.div
             className="relative w-full min-w-[240px] sm:w-72"
             whileFocus={{ scale: 1.02 }}
@@ -156,6 +183,7 @@ export default function BrowsePage() {
               placeholder="Zoek op naam of code..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyPress}
               className="w-full rounded-xl border-2 border-border-light bg-foreground-light py-3 pl-12 pr-4 text-sm text-text-primary-light shadow-sm outline-none ring-0 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark dark:text-text-primary-dark"
             />
           </motion.div>
@@ -164,7 +192,20 @@ export default function BrowsePage() {
           <div className="relative w-full min-w-[200px] sm:w-52">
             <select
               className="w-full appearance-none rounded-xl border-2 border-border-light bg-foreground-light py-3 pl-4 pr-10 text-sm text-text-primary-light shadow-sm outline-none ring-0 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark dark:text-text-primary-dark"
-              defaultValue="recommended"
+              value={activeFilters.sort}
+              onChange={(e) => {
+                setActiveFilters(prev => ({ ...prev, sort: e.target.value }));
+                // Trigger fetch immediately on sort change? or wait for Apply? Usually sort is immediate.
+                // Let's defer to "Apply" or just trigger it. Re-fetching provides better UX for sort.
+                // We'll leave it to manual "Apply" or effect if we wanted automatic.
+                // For now, let's keep consistency: "Filters toepassen" applies everything.
+                // But typically sort is instant. 
+                // Let's trigger fetchModules via a small timeout or assume user clicks Apply. 
+                // Actually, let's make sort instant by adding it to a useEffect or calling fetch directly.
+                // fetchModules(); // Can't call easily here due to state closure or async. 
+                // Ideally, useEffect on activeFilters could trigger fetch, but that might be chatty.
+                // For this implementation, I'll rely on the "Filters toepassen" button for everything to be safe and explicit.
+              }}
             >
               <option value="recommended">Sorteer: Aanbevolen</option>
               <option value="popularity">Sorteer: Populariteit</option>
@@ -181,7 +222,7 @@ export default function BrowsePage() {
 
       {/* Main content: filters + modules */}
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
-        {/* Sidebar filters - Collapsible on mobile */}
+        {/* Sidebar filters */}
         <motion.aside
           className="w-full shrink-0 lg:w-80"
           initial={{ opacity: 0, x: -30 }}
@@ -189,7 +230,6 @@ export default function BrowsePage() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="sticky top-24 flex flex-col gap-6 rounded-2xl border-2 border-border-light bg-foreground-light p-6 shadow-lg dark:border-border-dark dark:bg-foreground-dark">
-            {/* Filter header - clickable on mobile */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center justify-between gap-3 lg:cursor-default"
@@ -202,7 +242,6 @@ export default function BrowsePage() {
                 </div>
                 <h3 className="text-lg font-bold">Filters</h3>
               </div>
-              {/* Toggle icon - only visible on mobile */}
               <span className="material-symbols-outlined text-gray-500 transition-transform lg:hidden"
                 style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)' }}
               >
@@ -210,7 +249,6 @@ export default function BrowsePage() {
               </span>
             </button>
 
-            {/* Filter content - always visible on desktop, toggleable on mobile */}
             <AnimatePresence>
               {showFilters && (
                 <motion.div
@@ -221,40 +259,29 @@ export default function BrowsePage() {
                   className="overflow-hidden lg:!h-auto lg:!opacity-100"
                 >
                   <div className="flex flex-col gap-6 text-sm">
-                    {/* Filter sections */}
-                    {[
-                      { title: 'Periode', options: ['Period 1', 'Period 2', 'Period 3', 'Period 4'] },
-                      { title: 'Taal', options: ['Dutch', 'English'] },
-                      { title: 'Locatie', options: ['Breda', "'s-Hertogenbosch", 'Tilburg'] },
-                    ].map((section, sectionIndex) => (
-                      <motion.div
-                        key={section.title}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + sectionIndex * 0.1 }}
-                      >
+                    {/* Location Filter */}
+                     <div className="filter-section">
                         <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
-                          {section.title}
+                          Locatie
                         </h4>
                         <div className="flex flex-col gap-2">
-                          {section.options.map((label) => (
-                            <label
-                              key={label}
-                              className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary"
-                            >
-                              <input
-                                type="checkbox"
-                                className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary checked:scale-110 focus:ring-2 focus:ring-primary/50 focus:ring-offset-0 dark:border-border-dark"
-                              />
-                              <span className="transition-transform duration-300 group-hover:translate-x-1">{label}</span>
-                            </label>
-                          ))}
+                            {['Breda', "'s-Hertogenbosch", 'Tilburg'].map((loc) => (
+                                <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={activeFilters.location === loc}
+                                        onChange={() => updateFilter('location', loc)}
+                                        className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                    />
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">{loc}</span>
+                                </label>
+                            ))}
                         </div>
-                      </motion.div>
-                    ))}
+                    </div>
                   </div>
 
                   <motion.button
+                    onClick={handleApplyFilters}
                     className="mt-6 flex h-12 w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-accent px-4 text-sm font-bold tracking-wide text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -265,8 +292,6 @@ export default function BrowsePage() {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Mobile hint when collapsed */}
             {!showFilters && (
               <p className="text-xs text-gray-500 text-center lg:hidden">Tik om filters te tonen</p>
             )}
@@ -275,41 +300,42 @@ export default function BrowsePage() {
 
         {/* Modules grid */}
         <main className="flex w-full flex-col gap-8">
-          {/* CTA Banner for logged-in users without recommendations */}
-          {isLoggedIn && !hasRecommendations && !loading && (
-            <motion.div
-              className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 p-6 shadow-lg md:p-8"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                    <span className="material-symbols-outlined text-2xl text-primary">auto_awesome</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
-                      Vind jouw perfecte module!
-                    </h3>
-                    <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                      Doe onze AI-aanbevelingstest en ontdek welke modules het beste bij jou passen.
-                    </p>
-                  </div>
-                </div>
-                <Link href="/recommendations">
-                  <motion.button
-                    className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span>Start de Wizard</span>
-                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                  </motion.button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
+           {/* CTA Banner logic unchanged */}
+           {isLoggedIn && !hasRecommendations && !loading && (
+             <motion.div
+               className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 p-6 shadow-lg md:p-8"
+               initial={{ opacity: 0, y: -20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.6 }}
+             >
+               <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                 <div className="flex items-start gap-4">
+                   <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                     <span className="material-symbols-outlined text-2xl text-primary">auto_awesome</span>
+                   </div>
+                   <div>
+                     <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
+                       Vind jouw perfecte module!
+                     </h3>
+                     <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                       Doe onze AI-aanbevelingstest en ontdek welke modules het beste bij jou passen.
+                     </p>
+                   </div>
+                 </div>
+                 <Link href="/recommendations">
+                   <motion.button
+                     className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
+                     whileHover={{ scale: 1.05 }}
+                     whileTap={{ scale: 0.95 }}
+                   >
+                     <span>Start de Wizard</span>
+                     <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                   </motion.button>
+                 </Link>
+               </div>
+             </motion.div>
+           )}
+
 
           {loading ? (
             <motion.div
@@ -323,11 +349,11 @@ export default function BrowsePage() {
                 <div className="h-4 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
               </div>
             </motion.div>
-          ) : filteredModules.length === 0 ? (
+          ) : modules.length === 0 ? (
             <div className="p-8 text-center text-text-secondary-light dark:text-text-secondary-dark">Geen modules gevonden.</div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-              {filteredModules.map((module: Module, index: number) => (
+              {modules.map((module: Module, index: number) => (
                 <motion.div
                   key={module.id}
                   className="group flex flex-col overflow-hidden rounded-2xl border-2 border-border-light bg-foreground-light shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark"
