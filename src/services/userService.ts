@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Helper to get auth header
 const getAuthHeader = () => {
@@ -78,9 +78,22 @@ export const userService = {
     }
 };
 
+
+export interface ModuleFilters {
+    search?: string;
+    location?: string;
+    language?: string;
+    period?: string;
+    sort?: string;
+    limit?: number;
+}
+
 export const moduleService = {
-    getAllModules: async () => {
-        const response = await axios.get(`${API_URL}/api/keuzemodules`);
+    getAllModules: async (filters: ModuleFilters = {}) => {
+        const response = await axios.get(`${API_URL}/api/keuzemodules`, {
+            params: filters
+        });
         return response.data;
     }
 };
+
