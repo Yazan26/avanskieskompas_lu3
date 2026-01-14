@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RecommendationWizardV2 } from '@/components/recommendations/RecommendationWizardV2';
 import { fetchRecommendations } from '@/services/recommendationService';
 
@@ -10,11 +10,11 @@ jest.mock('@/services/recommendationService', () => ({
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-        aside: ({ children, ...props }: any) => <aside {...props}>{children}</aside>,
+        div: ({ children, ...props }: React.PropsWithChildren<unknown>) => <div {...props}>{children}</div>,
+        button: ({ children, ...props }: React.PropsWithChildren<unknown>) => <button {...props}>{children}</button>,
+        aside: ({ children, ...props }: React.PropsWithChildren<unknown>) => <aside {...props}>{children}</aside>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: React.PropsWithChildren<unknown>) => <>{children}</>,
 }));
 
 describe('RecommendationWizardV2', () => {

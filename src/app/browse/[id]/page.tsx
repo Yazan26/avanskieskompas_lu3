@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 interface ModuleDetail {
@@ -17,7 +16,7 @@ interface ModuleDetail {
   language?: string;
   period?: string;
   start_date?: string;
-  reviews?: any[]; 
+  reviews?: unknown[]; 
 }
 
 // Ensure this matches your backend port (usually 3001)
@@ -44,25 +43,25 @@ async function getModule(id: string): Promise<ModuleDetail | null> {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const module = await getModule(id);
+  const moduleDetail = await getModule(id);
   
-  if (!module) {
+  if (!moduleDetail) {
     return {
       title: 'Module niet gevonden | Avans Keuze Kompas',
     };
   }
 
   return {
-    title: `${module.name} | Avans Keuze Kompas`,
-    description: module.shortdescription,
+    title: `${moduleDetail.name} | Avans Keuze Kompas`,
+    description: moduleDetail.shortdescription,
   };
 }
 
 export default async function ModuleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const module = await getModule(id);
+  const moduleDetail = await getModule(id);
 
-  if (!module) {
+  if (!moduleDetail) {
     return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
             <h1 className="text-3xl font-bold mb-4">Module niet gevonden</h1>
@@ -77,10 +76,10 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
 
   // Parse tags if they are a string
   let tags: string[] = [];
-  if (Array.isArray(module.module_tags)) {
-      tags = module.module_tags;
-  } else if (typeof module.module_tags === 'string') {
-      tags = module.module_tags.split(',').map(t => t.trim());
+  if (Array.isArray(moduleDetail.module_tags)) {
+      tags = moduleDetail.module_tags;
+  } else if (typeof moduleDetail.module_tags === 'string') {
+      tags = moduleDetail.module_tags.split(',').map(t => t.trim());
   }
 
   return (
@@ -106,7 +105,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
           /
         </span>
         <span className="font-medium text-text-light dark:text-text-dark">
-          {module.name}
+          {moduleDetail.name}
         </span>
       </div>
 
@@ -116,10 +115,10 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
           {/* Heading */}
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-black leading-tight tracking-tight text-text-light dark:text-text-dark sm:text-4xl">
-              {module.name}
+              {moduleDetail.name}
             </h1>
             <p className="text-base font-medium text-text-muted-light dark:text-text-muted-dark">
-              Code: {module.id}
+              Code: {moduleDetail.id}
             </p>
           </div>
 
@@ -130,30 +129,30 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                 Beschrijving
               </h3>
               <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                {module.description || module.shortdescription}
+                {moduleDetail.description || moduleDetail.shortdescription}
               </div>
             </section>
 
              {/* Content / Inhoud */}
-             {module.content && (
+             {moduleDetail.content && (
               <section className="flex flex-col gap-3">
                 <h3 className="text-xl font-bold text-text-light dark:text-text-dark">
                   Inhoud
                 </h3>
                 <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                  {module.content}
+                  {moduleDetail.content}
                 </div>
               </section>
             )}
 
             {/* Learning Outcomes */}
-             {module.learningoutcomes && (
+             {moduleDetail.learningoutcomes && (
               <section className="flex flex-col gap-3">
                 <h3 className="text-xl font-bold text-text-light dark:text-text-dark">
                   Leerdoelen
                 </h3>
                 <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                  {module.learningoutcomes}
+                  {moduleDetail.learningoutcomes}
                 </div>
               </section>
             )}
@@ -174,7 +173,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                   ECTS
                 </span>
                 <span className="font-semibold text-text-light dark:text-text-dark">
-                  {module.studycredit}
+                  {moduleDetail.studycredit}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -182,7 +181,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                   Niveau
                 </span>
                 <span className="font-semibold text-text-light dark:text-text-dark">
-                  {module.level || 'HBO-Bachelor'}
+                  {moduleDetail.level || 'HBO-Bachelor'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -190,7 +189,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                   Taal
                 </span>
                 <span className="font-semibold text-text-light dark:text-text-dark">
-                  {module.language || 'Onbekend'}
+                  {moduleDetail.language || 'Onbekend'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -198,7 +197,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                   Locatie
                 </span>
                 <span className="font-semibold text-text-light dark:text-text-dark">
-                  {module.location}
+                  {moduleDetail.location}
                 </span>
               </div>
             </div>

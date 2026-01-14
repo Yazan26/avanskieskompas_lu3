@@ -330,7 +330,7 @@ export default function BrowsePage() {
     });
   };
   
-  const setFilterValue = (category: keyof typeof activeFilters, value: any) => {
+  const setFilterValue = (category: keyof typeof activeFilters, value: unknown) => {
       setActiveFilters(prev => ({ ...prev, [category]: value }));
   };
 
