@@ -16,8 +16,8 @@ import {
     X,
     AlertCircle,
 } from 'lucide-react';
-import { fetchRecommendations, RecommendationWeights } from '../../services/recommendationService';
-import { RecommendedModule } from '../../types/recommendations';
+import { fetchRecommendations, RecommendationWeights } from '@/services/recommendationService';
+import { RecommendedModule } from '@/types/recommendations';
 import { RecommendationResultCard } from './RecommendationResultCard';
 
 // ------------ TYPES & CONSTANTS ----------------
