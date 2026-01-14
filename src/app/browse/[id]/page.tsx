@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { Link } from 'lucide-react';
+import ModuleDetailClient from './ModuleDetailClient';
 
 interface ModuleDetail {
   _id: string;
@@ -13,10 +14,12 @@ interface ModuleDetail {
   level: string;
   learningoutcomes: string;
   module_tags?: string | string[];
-  language?: string;
   period?: string;
   start_date?: string;
-  reviews?: unknown[]; 
+  estimated_difficulty?: number;
+  popularity_score?: number;
+  available_spots?: number;
+  reviews?: unknown[];
 }
 
 // Ensure this matches your backend port (usually 3001)
@@ -63,171 +66,33 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
 
   if (!moduleDetail) {
     return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h1 className="text-3xl font-bold mb-4">Module niet gevonden</h1>
-            <p className="mb-6 text-gray-500">De module met ID {id} kon niet worden gevonden.</p>
-            <p className="text-sm text-gray-400">Controleer of de backend draait en de route <code>/api/keuzemodules/:id</code> heeft.</p>
-            <Link href="/browse" className="mt-4 text-primary hover:underline">
-                Terug naar overzicht
-            </Link>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
+        <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-red-500/10">
+          <span className="material-symbols-outlined text-4xl text-red-500">error</span>
         </div>
+        <h1 className="mb-4 text-3xl font-bold text-text-light dark:text-text-dark">
+          Module niet gevonden
+        </h1>
+        <p className="mb-2 text-gray-500">
+          De module met ID <span className="font-mono font-bold">{id}</span> kon niet worden gevonden.
+        </p>
+        <p className="mb-8 text-sm text-gray-400">
+          Controleer of de backend draait en de route{' '}
+          <code className="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-800">
+            /api/keuzemodules/:id
+          </code>{' '}
+          beschikbaar is.
+        </p>
+        <Link
+          href="/browse"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+          Terug naar overzicht
+        </Link>
+      </div>
     );
   }
 
-  // Parse tags if they are a string
-  let tags: string[] = [];
-  if (Array.isArray(moduleDetail.module_tags)) {
-      tags = moduleDetail.module_tags;
-  } else if (typeof moduleDetail.module_tags === 'string') {
-      tags = moduleDetail.module_tags.split(',').map(t => t.trim());
-  }
-
-  return (
-    <section className="py-8">
-      {/* Breadcrumbs */}
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
-        <Link
-          href="/"
-          className="font-medium text-accent hover:underline"
-        >
-          Home
-        </Link>
-        <span className="text-text-secondary-light dark:text-text-secondary-dark">
-          /
-        </span>
-        <Link
-          href="/browse"
-          className="font-medium text-accent hover:underline"
-        >
-          Browse VKM
-        </Link>
-        <span className="text-text-secondary-light dark:text-text-secondary-dark">
-          /
-        </span>
-        <span className="font-medium text-text-light dark:text-text-dark">
-          {moduleDetail.name}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Main content */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Heading */}
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-text-light dark:text-text-dark sm:text-4xl">
-              {moduleDetail.name}
-            </h1>
-            <p className="text-base font-medium text-text-muted-light dark:text-text-muted-dark">
-              Code: {moduleDetail.id}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-8 pt-2">
-            {/* Description */}
-            <section className="flex flex-col gap-3">
-              <h3 className="text-xl font-bold text-text-light dark:text-text-dark">
-                Beschrijving
-              </h3>
-              <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                {moduleDetail.description || moduleDetail.shortdescription}
-              </div>
-            </section>
-
-             {/* Content / Inhoud */}
-             {moduleDetail.content && (
-              <section className="flex flex-col gap-3">
-                <h3 className="text-xl font-bold text-text-light dark:text-text-dark">
-                  Inhoud
-                </h3>
-                <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                  {moduleDetail.content}
-                </div>
-              </section>
-            )}
-
-            {/* Learning Outcomes */}
-             {moduleDetail.learningoutcomes && (
-              <section className="flex flex-col gap-3">
-                <h3 className="text-xl font-bold text-text-light dark:text-text-dark">
-                  Leerdoelen
-                </h3>
-                <div className="prose dark:prose-invert max-w-none text-base leading-relaxed text-text-light dark:text-text-dark whitespace-pre-wrap">
-                  {moduleDetail.learningoutcomes}
-                </div>
-              </section>
-            )}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-6">
-          
-          {/* Key facts */}
-          <div className="flex flex-col gap-4 rounded-xl border border-border-light bg-card-light p-6 dark:border-border-dark dark:bg-card-dark">
-            <h3 className="text-lg font-bold text-text-light dark:text-text-dark">
-              Details
-            </h3>
-            <div className="flex flex-col gap-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted-light dark:text-text-muted-dark">
-                  ECTS
-                </span>
-                <span className="font-semibold text-text-light dark:text-text-dark">
-                  {moduleDetail.studycredit}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted-light dark:text-text-muted-dark">
-                  Niveau
-                </span>
-                <span className="font-semibold text-text-light dark:text-text-dark">
-                  {moduleDetail.level || 'HBO-Bachelor'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted-light dark:text-text-muted-dark">
-                  Taal
-                </span>
-                <span className="font-semibold text-text-light dark:text-text-dark">
-                  {moduleDetail.language || 'Onbekend'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted-light dark:text-text-muted-dark">
-                  Locatie
-                </span>
-                <span className="font-semibold text-text-light dark:text-text-dark">
-                  {moduleDetail.location}
-                </span>
-              </div>
-            </div>
-             {/* Tags */}
-             {tags.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {tags.map((tag: string, index: number) => (
-                    <span key={index} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col gap-3">
-            <button className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-base font-bold text-white transition-colors hover:bg-primary/90">
-              Aanmelden voor module
-            </button>
-            <button className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-secondary/20 text-base font-bold text-secondary transition-colors hover:bg-secondary/30 dark:bg-secondary/30 dark:hover:bg-secondary/40">
-              <span className="material-symbols-outlined">
-                favorite_border
-              </span>
-              Opslaan in favorieten
-            </button>
-          </div>
-
-        </aside>
-      </div>
-    </section>
-  );
+  return <ModuleDetailClient module={moduleDetail} />;
 }
