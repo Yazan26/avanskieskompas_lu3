@@ -19,6 +19,8 @@ import {
 import { fetchRecommendations, RecommendationWeights } from '@/services/recommendationService';
 import { RecommendedModule } from '@/types/recommendations';
 import { RecommendationResultCard } from './RecommendationResultCard';
+import { SmartTagSelector } from './SmartTagSelector';
+import ALL_TAGS from '../../data/moduleTags.json';
 
 // ------------ TYPES & CONSTANTS ----------------
 interface RecommendationsResponse {
@@ -28,11 +30,8 @@ interface RecommendationsResponse {
         userIdFromMiddleware?: string;
     };
 }
-const AVAILABLE_TAGS = [
-    'Python', 'Data Science', 'AI & Machine Learning', 'Online Marketing',
-    'Concepting', 'Finance', 'Management', 'Duurzaamheid', 'Gezondheid',
-    'Communicatie', 'Onderzoek', 'Programmeren', 'Biologie', 'Chemie', 'Recht'
-];
+// Tags are now loaded from the comprehensive moduleTags.json (652 tags)
+// and managed by the SmartTagSelector component
 
 interface WizardState {
     interests: string;
@@ -350,30 +349,13 @@ export const RecommendationWizardV2: React.FC = () => {
                             <p className="text-lg md:text-xl text-gray-500">Selecteer tags of pas de weging aan (optioneel).</p>
                         </div>
 
-                        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-                            {AVAILABLE_TAGS.map(tag => {
-                                const active = formData.selectedTags.includes(tag);
-                                return (
-                                    <button
-                                        key={tag}
-                                        onClick={() => {
-                                            const newTags = active
-                                                ? formData.selectedTags.filter(t => t !== tag)
-                                                : [...formData.selectedTags, tag];
-                                            setFormData({ ...formData, selectedTags: newTags });
-                                        }}
-                                        className={`px-4 py-2 md:px-6 md:py-3 rounded-xl text-sm md:text-lg font-medium transition-all duration-200 border-2
-                                            ${active
-                                                ? 'bg-avans-red border-avans-red text-white shadow-lg shadow-red-500/20 scale-105'
-                                                : 'bg-white dark:bg-gray-800 border-transparent hover:border-gray-200 text-gray-600 dark:text-gray-300'
-                                            }
-                                        `}
-                                    >
-                                        {tag}
-                                    </button>
-                                )
-                            })}
-                        </div>
+                        {/* Smart Tag Selector with AI suggestions, search, and pagination */}
+                        <SmartTagSelector
+                            allTags={ALL_TAGS}
+                            selectedTags={formData.selectedTags}
+                            onTagsChange={(newTags) => setFormData({ ...formData, selectedTags: newTags })}
+                            userInterestText={formData.interests}
+                        />
 
                         {/* WEIGHTS TOGGLE */}
                         <div className="max-w-xl mx-auto pt-6 md:pt-8 border-t border-gray-200 dark:border-gray-800">
