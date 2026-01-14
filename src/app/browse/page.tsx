@@ -265,7 +265,7 @@ export default function BrowsePage() {
                           Locatie
                         </h4>
                         <div className="flex flex-col gap-2">
-                            {['Breda', "'s-Hertogenbosch", 'Tilburg'].map((loc) => (
+                            {['Breda', "Den Bosch", 'Tilburg'].map((loc) => (
                                 <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
                                     <input
                                         type="checkbox"
