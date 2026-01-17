@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
 import { userService, moduleService, UserPreferences } from '@/services/userService';
 import Link from 'next/link';
 
@@ -18,6 +18,28 @@ interface Module {
     shortdescription: string;
 }
 
+interface PasswordStrength {
+    score: number;
+    label: string;
+    color: string;
+}
+
+function getPasswordStrength(password: string): PasswordStrength {
+    let score = 0;
+
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { score: 1, label: "Zwak", color: "bg-red-500" };
+    if (score <= 2) return { score: 2, label: "Matig", color: "bg-orange-500" };
+    if (score <= 3) return { score: 3, label: "Goed", color: "bg-yellow-500" };
+    if (score <= 4) return { score: 4, label: "Sterk", color: "bg-green-500" };
+    return { score: 5, label: "Zeer sterk", color: "bg-emerald-500" };
+}
+
 export default function ProfilePage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [modules, setModules] = useState<Module[]>([]);
@@ -28,6 +50,13 @@ export default function ProfilePage() {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+
+    // Password validation
+    const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+    const passwordsMatch = password === confirmPassword;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,18 +90,27 @@ export default function ProfilePage() {
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password !== confirmPassword) {
-            alert("Wachtwoorden komen niet overeen!");
+        setPasswordError(null);
+
+        if (password.length < 8) {
+            setPasswordError("Wachtwoord moet minimaal 8 tekens zijn");
             return;
         }
+
+        if (!passwordsMatch) {
+            setPasswordError("Wachtwoorden komen niet overeen!");
+            return;
+        }
+
         try {
             await userService.updateProfile({ password });
             alert("Wachtwoord bijgewerkt!");
             setPassword('');
             setConfirmPassword('');
+            setPasswordError(null);
         } catch (error) {
             console.error("Update failed", error);
-            alert("Fout bij bijwerken wachtwoord.");
+            setPasswordError("Fout bij bijwerken wachtwoord.");
         }
     };
 
@@ -285,12 +323,12 @@ export default function ProfilePage() {
                                     Wachtwoord wijzigen
                                 </h3>
                                 <p className="border-b-2 border-gray-200 pb-6 text-sm text-text-muted-light dark:border-border-dark dark:text-text-muted-dark">
-                                    Update uw wachtwoord.
+                                    Update uw wachtwoord. Minimaal 8 tekens vereist.
                                 </p>
 
                                 <form className="mt-6 space-y-6" onSubmit={handleUpdatePassword}>
                                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                        <motion.label
+                                        <motion.div
                                             className="flex flex-col"
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -299,15 +337,27 @@ export default function ProfilePage() {
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
                                                 Nieuw wachtwoord
                                             </span>
-                                            <input
-                                                type="password"
-                                                placeholder="••••••••"
-                                                className="h-12 rounded-xl border-2 border-gray-300 bg-gray-50 px-4 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                            />
-                                        </motion.label>
-                                        <motion.label
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    className="w-full h-12 rounded-xl border-2 border-gray-300 bg-gray-50 px-4 pr-12 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark"
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                    aria-label={showPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">
+                                                        {showPassword ? "visibility_off" : "visibility"}
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                        <motion.div
                                             className="flex flex-col"
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -316,22 +366,101 @@ export default function ProfilePage() {
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
                                                 Bevestig wachtwoord
                                             </span>
-                                            <input
-                                                type="password"
-                                                placeholder="••••••••"
-                                                className="h-12 rounded-xl border-2 border-gray-300 bg-gray-50 px-4 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                            />
-                                        </motion.label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    className={`w-full h-12 rounded-xl border-2 bg-gray-50 px-4 pr-12 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:shadow-lg dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark ${
+                                                        confirmPassword.length > 0
+                                                            ? passwordsMatch
+                                                                ? "border-green-500 focus:border-green-500 focus:shadow-green-500/20"
+                                                                : "border-red-500 focus:border-red-500 focus:shadow-red-500/20"
+                                                            : "border-gray-300 dark:border-border-dark focus:border-primary focus:shadow-primary/20"
+                                                    }`}
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                />
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                    {confirmPassword.length > 0 && (
+                                                        <span className={passwordsMatch ? "text-green-500" : "text-red-500"}>
+                                                            <span className="material-symbols-outlined text-lg">
+                                                                {passwordsMatch ? "check_circle" : "cancel"}
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                        aria-label={showConfirmPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                                                    >
+                                                        <span className="material-symbols-outlined text-xl">
+                                                            {showConfirmPassword ? "visibility_off" : "visibility"}
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {confirmPassword.length > 0 && !passwordsMatch && (
+                                                <p className="text-xs text-red-500 mt-1">Wachtwoorden komen niet overeen</p>
+                                            )}
+                                        </motion.div>
                                     </div>
+
+                                    {/* Password strength indicator */}
+                                    <AnimatePresence>
+                                        {password.length > 0 && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="space-y-2"
+                                            >
+                                                <div className="flex gap-1">
+                                                    {[1, 2, 3, 4, 5].map((level) => (
+                                                        <div
+                                                            key={level}
+                                                            className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                                                                level <= passwordStrength.score
+                                                                    ? passwordStrength.color
+                                                                    : "bg-gray-200 dark:bg-gray-700"
+                                                            }`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        Wachtwoordsterkte: <span className="font-semibold">{passwordStrength.label}</span>
+                                                    </p>
+                                                    {password.length < 8 && (
+                                                        <p className="text-xs text-orange-500">Minimaal 8 tekens vereist</p>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Error message */}
+                                    <AnimatePresence>
+                                        {passwordError && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="flex items-center gap-2 p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-500/20"
+                                            >
+                                                <span className="material-symbols-outlined text-lg">error</span>
+                                                <span>{passwordError}</span>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
                                     <div className="flex justify-end pt-4">
                                         <motion.button
                                             type="submit"
-                                            className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-8 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/50"
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            disabled={password.length < 8 || !passwordsMatch}
+                                            className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-8 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
+                                            whileHover={{ scale: password.length >= 8 && passwordsMatch ? 1.05 : 1 }}
+                                            whileTap={{ scale: password.length >= 8 && passwordsMatch ? 0.95 : 1 }}
                                         >
                                             <span>Wachtwoord updaten</span>
                                             <span className="material-symbols-outlined text-lg">lock</span>
