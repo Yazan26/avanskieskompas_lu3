@@ -39,10 +39,22 @@ function renderReasoningText(text: string): React.ReactNode {
 
 export const RecommendationResultCard: React.FC<RecommendationResultCardProps> = ({ module, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const matchPercentage = Math.round(module.final_score * 100);
+  
+  // Use API's match_percentage if available, otherwise calculate with safeguard
+  const matchPercentage = module.match_percentage !== undefined 
+    ? Math.min(100, Math.max(0, module.match_percentage))
+    : Math.min(100, Math.max(0, Math.round(module.final_score * 100)));
   
   // Determine match quality tier for visual styling
+  // Use API's match_tier if available, otherwise calculate locally
   const getMatchTier = () => {
+    const apiTier = module.match_tier;
+    if (apiTier === 'excellent') return { label: 'Uitstekend', color: 'emerald', icon: Award };
+    if (apiTier === 'strong') return { label: 'Sterk', color: 'blue', icon: Sparkles };
+    if (apiTier === 'good') return { label: 'Goed', color: 'amber', icon: TrendingUp };
+    if (apiTier === 'exploratory') return { label: 'Verken', color: 'slate', icon: BookOpen };
+    
+    // Fallback to percentage-based calculation
     if (matchPercentage >= 70) return { label: 'Uitstekend', color: 'emerald', icon: Award };
     if (matchPercentage >= 50) return { label: 'Sterk', color: 'blue', icon: Sparkles };
     if (matchPercentage >= 30) return { label: 'Goed', color: 'amber', icon: TrendingUp };
@@ -50,6 +62,13 @@ export const RecommendationResultCard: React.FC<RecommendationResultCardProps> =
   };
   
   const matchTier = getMatchTier();
+  
+  // Confidence indicator (0-1 from API)
+  const confidence = module.confidence ?? 0.5;
+  const confidenceLevel = confidence >= 0.7 ? 'Hoog' : confidence >= 0.4 ? 'Gemiddeld' : 'Laag';
+  
+  // Percentile rank for "Top X%" display
+  const percentileRank = module.percentile_rank;
   
   // Get top 3 most important reasoning items for preview
   const previewReasoning = module.detailed_reasoning?.slice(0, 3) || [];
@@ -122,6 +141,25 @@ export const RecommendationResultCard: React.FC<RecommendationResultCardProps> =
             }`}>
               {matchTier.label} Match
             </span>
+            {/* Percentile rank badge */}
+            {percentileRank !== undefined && percentileRank >= 80 && (
+              <span className="mt-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-[10px] font-semibold rounded-full shadow-sm">
+                ⭐ Top {100 - percentileRank}%
+              </span>
+            )}
+            {/* Confidence dots indicator */}
+            <div className="flex gap-0.5 mt-1.5" title={`Betrouwbaarheid: ${confidenceLevel}`}>
+              {[...Array(5)].map((_, i) => (
+                <div 
+                  key={i}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    i < Math.round(confidence * 5) 
+                      ? 'bg-avans-red' 
+                      : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 

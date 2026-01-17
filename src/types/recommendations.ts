@@ -30,12 +30,21 @@ export interface RecommendedModule {
   learningoutcomes?: string;
   score_breakdown?: {
     content_similarity: number;
-    constraint_bonus: number;
-    popularity_bonus: number;
+    keyword_depth?: number;
+    constraint_bonus?: number;
+    popularity_bonus?: number;
     location_match?: number;
     tags_match?: number;
     difficulty_penalty?: number;
+    popularity?: number;
+    availability?: number;
+    difficulty_factor?: number;
   };
+  // NEW: Enhanced scoring fields (guaranteed bounds)
+  match_percentage?: number;  // 0-100, GUARANTEED
+  confidence?: number;        // 0-1 reliability score
+  percentile_rank?: number;   // 0-100 position among all modules
+  match_tier?: 'excellent' | 'strong' | 'good' | 'exploratory';
 }
 
 export interface Module {
