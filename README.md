@@ -124,7 +124,7 @@ Voordat je begint, zorg ervoor dat je de volgende software hebt geïnstalleerd:
 
 ```bash
 # 1. Clone de repository
-git clone https://github.com/YOUR_USERNAME/avanskieskompas_lu3.git
+git clone https://github.com/yazan26/avanskieskompas_lu3.git
 cd avanskieskompas_lu3
 
 # 2. Installeer dependencies
@@ -172,7 +172,7 @@ Om de complete applicatie te draaien, moet je alle drie de services opzetten en 
 mkdir avans-kieskompas && cd avans-kieskompas
 
 # Clone alle drie repositories
-git clone https://github.com/YOUR_USERNAME/avanskieskompas_lu3.git frontend
+git clone https://github.com/Yazan26/avanskieskompas_lu3.git frontend
 git clone https://github.com/Rishyansyal/backendLU3.git backend
 git clone https://github.com/Rishyansyal/fastapiLU3.git fastapi
 ```
@@ -394,6 +394,6 @@ Dit project is ontwikkeld voor educatieve doeleinden als onderdeel van de Avans 
 
 **Gebouwd met ❤️ voor Avans Hogeschool studenten**
 
-[Frontend](https://github.com/YOUR_USERNAME/avanskieskompas_lu3) • [Backend](https://github.com/Rishyansyal/backendLU3) • [AI Service](https://github.com/Rishyansyal/fastapiLU3)
+[Frontend](https://github.com/Yazan26/avanskieskompas_lu3) • [Backend](https://github.com/Rishyansyal/backendLU3) • [AI Service](https://github.com/Rishyansyal/fastapiLU3)
 
 </div>
