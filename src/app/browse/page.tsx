@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { moduleService, userService } from '@/services/userService';
 import { useTranslation } from '@/components/providers/LanguageProvider';
@@ -32,26 +32,53 @@ interface Module {
   period?: string;
   language?: string;
   isRecommended?: boolean;
+  startMonthYear?: string;
 }
 
 export default function BrowsePage() {
   const { t, language } = useTranslation();
   const [modules, setModules] = useState<Module[]>([]);
   const [savedModules, setSavedModules] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+
+
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasRecommendations, setHasRecommendations] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [tagSearch, setTagSearch] = useState(''); // Local search for tags
+
 
   // Filter keys matching backend expectation
   const [activeFilters, setActiveFilters] = useState<{
-    location?: string;
+    locations: string[];
+    ecs: number[];
+    levels: string[];
+    startMonths: string[];
+    difficulty: number[];
+    spotsRange: [number, number];
+    selectedTags: string[];
+    interestsScoreRange: [number, number];
+    popularityScoreRange: [number, number];
+    search: string;
     sort: string;
   }>({
+    locations: [],
+    ecs: [],
+    levels: [],
+    startMonths: [],
+    difficulty: [],
+    spotsRange: [0, 100],
+    selectedTags: [],
+    interestsScoreRange: [0, 1],
+    popularityScoreRange: [0, 500],
+    search: '',
     sort: 'recommended'
   });
+
+  const [allModules, setAllModules] = useState<Module[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
 
   // Handle responsive filter visibility
   useEffect(() => {
@@ -69,16 +96,9 @@ export default function BrowsePage() {
   const fetchModules = async () => {
     setLoading(true);
     try {
-      // Prepare filters for API
-      const apiFilters: any = {
-        search: searchQuery,
-        sort: activeFilters.sort
-      };
-
-      if (activeFilters.location) apiFilters.location = activeFilters.location;
-
-      const [allModules, userProfile] = await Promise.all([
-        moduleService.getAllModules(apiFilters),
+      // Fetch all modules without filters to enable client-side filtering
+      const [modulesData, userProfile] = await Promise.all([
+        moduleService.getAllModules({}),
         userService.getProfile().catch(() => null)
       ]);
 
@@ -92,21 +112,167 @@ export default function BrowsePage() {
         }
       }
 
-      const mappedModules = allModules.map((m: Module) => ({
-        ...m,
-        saved: savedIds.includes(m.id),
-        isRecommended: savedIds.includes(m.id),
-        period: m.period || 'Period 1-4', // Fallback if missing
-        language: m.language || (m.description && m.description.includes('Dutch') ? 'Dutch' : 'English')
-      }));
+      const mappedModules = modulesData.map((m: Module) => {
+          let startMonthYear = undefined;
+          if (m.start_date) {
+              const date = new Date(m.start_date);
+              if (!isNaN(date.getTime())) {
+                  startMonthYear = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+              }
+          }
 
-      setModules(mappedModules);
+          return {
+            ...m,
+            saved: savedIds.includes(m.id),
+            isRecommended: savedIds.includes(m.id),
+            period: m.period || 'Period 1-4',
+            language: m.language || (m.description && m.description.includes('Dutch') ? 'Dutch' : 'English'),
+            // Ensure numeric values for filtering
+            available_spots: m.available_spots || 0,
+            estimated_difficulty: m.estimated_difficulty || 0,
+            interests_match_score: m.interests_match_score || 0,
+            popularity_score: m.popularity_score || 0,
+            // Parse tags if string
+            module_tags: typeof m.module_tags === 'string' ? m.module_tags : JSON.stringify(m.module_tags || []),
+            startMonthYear
+        };
+      });
+
+      setAllModules(mappedModules);
+      
+      // key Extract unique tags and months
+      const tags = new Set<string>();
+      const months = new Set<string>();
+      
+      mappedModules.forEach((m: Module) => {
+        if (m.module_tags) {
+           try {
+             // Handle both stringified array or comma separated
+             const parsed = m.module_tags.startsWith('[') 
+               ? JSON.parse(m.module_tags) 
+               : m.module_tags.split(',').map(t => t.trim());
+             
+             if (Array.isArray(parsed)) {
+               parsed.forEach((t: string) => {
+                 const cleanTag = t.toLowerCase().trim();
+                 if (cleanTag && !['de', 'het', 'een', 'en', 'in', 'op'].includes(cleanTag)) {
+                    tags.add(t.trim()); // Keep original case for display? Or normalize? Let's keep trim.
+                 }
+               });
+             }
+           } catch (e) { console.warn('Tag parse error', e); }
+        }
+        if (m.startMonthYear) {
+            months.add(m.startMonthYear);
+        }
+      });
+      
+      // Sort months chronologically
+      const sortedMonths = Array.from(months).sort((a, b) => {
+          const dateA = new Date(a);
+          const dateB = new Date(b);
+          return dateA.getTime() - dateB.getTime();
+      });
+
+      setAvailableTags(Array.from(tags).sort());
+      setAvailableMonths(sortedMonths);
+
+      applyFilters(mappedModules, activeFilters);
+
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const applyFilters = useCallback((modules: Module[], filters: typeof activeFilters) => {
+      let result = [...modules];
+
+      // Text Search
+      if (filters.search) {
+          const q = filters.search.toLowerCase();
+          result = result.filter(m => 
+              m.name.toLowerCase().includes(q) || 
+              m.shortdescription.toLowerCase().includes(q) ||
+              m.description.toLowerCase().includes(q) ||
+              m.learningoutcomes.toLowerCase().includes(q) ||
+              m.module_tags?.toLowerCase().includes(q)
+          );
+      }
+
+      // Location
+      if (filters.locations.length > 0) {
+          result = result.filter(m => filters.locations.some(loc => m.location.includes(loc)));
+      }
+
+      // EC
+      if (filters.ecs.length > 0) {
+          result = result.filter(m => filters.ecs.includes(m.studycredit));
+      }
+
+      // Level
+      if (filters.levels.length > 0) {
+          result = result.filter(m => filters.levels.includes(m.level));
+      }
+
+      // Difficulty
+      if (filters.difficulty.length > 0) {
+          result = result.filter(m => filters.difficulty.includes(m.estimated_difficulty || 0));
+      }
+
+      // Available Spots (Range)
+      result = result.filter(m => {
+          const spots = m.available_spots || 0;
+          return spots >= filters.spotsRange[0] && spots <= filters.spotsRange[1];
+      });
+
+      // Tags
+      if (filters.selectedTags.length > 0) {
+          result = result.filter(m => {
+             return filters.selectedTags.some(t => m.module_tags?.toLowerCase().includes(t.toLowerCase()));
+          });
+      }
+      
+      // Start Date
+      if (filters.startMonths.length > 0) {
+          result = result.filter(m => m.startMonthYear && filters.startMonths.includes(m.startMonthYear));
+      }
+
+      // Score Filters (Interests Query)
+      if (filters.interestsScoreRange[0] > 0 || filters.interestsScoreRange[1] < 1) {
+          result = result.filter(m => {
+              const s = m.interests_match_score || 0;
+              return s >= filters.interestsScoreRange[0] && s <= filters.interestsScoreRange[1];
+          });
+      }
+
+       // Score Filters (Popularity)
+      if (filters.popularityScoreRange[0] > 0 || filters.popularityScoreRange[1] < 500) {
+          result = result.filter(m => {
+              const s = m.popularity_score || 0;
+              return s >= filters.popularityScoreRange[0] && s <= filters.popularityScoreRange[1];
+          });
+      }
+
+      // Sorting
+      if (filters.sort === 'recommended') {
+          result.sort((a, b) => (Number(b.isRecommended) - Number(a.isRecommended)));
+      } else if (filters.sort === 'popularity') {
+          result.sort((a, b) => (b.popularity_score || 0) - (a.popularity_score || 0));
+      } else if (filters.sort === 'az') {
+          result.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      setModules(result);
+  }, []);
+  
+  // Update fetch modules to just re-apply filters if we have modules
+  useEffect(() => {
+     if (allModules.length > 0) {
+         applyFilters(allModules, activeFilters);
+     }
+  }, [activeFilters, allModules, applyFilters]); // Re-run when filters change
 
   // Debounce search or fetch on effect? 
   // For simplicity, we fetch on mount and when interactions happen.
@@ -116,16 +282,23 @@ export default function BrowsePage() {
   }, []); // Run once on mount
 
   // Apply filters handler
+  // Removed explicit handler since useEffect handles it, but we can keep it for manual "Apply" buttons if we want to defer state updates?
+  // Current implementation updates activeFilters immediately. 
+  // If we want a "Apply" button, we should have a separate "pendingFilters" state.
+  // For now, let's make it reactive or keep the manual structure.
+  // The UI has "Filters toepassen" (Apply Filters).
+  // So we should probably use a separate "pendingFilters" state and only commit to "activeFilters" when Apply is clicked?
+  // Or just let it be reactive. Reactive is usually better for web. 
+  // But the existing UI had a button.
+  // Let's make the individual filter inputs update state, and the effect triggers the list update.
+  // So the button is redundant or can just scroll to top/confirm.
   const handleApplyFilters = () => {
-    fetchModules();
+      // already applied via effect
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!isDesktop) setShowFilters(false);
   };
 
-  // Handle Search on Enter
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      fetchModules();
-    }
-  };
+
 
   const toggleSave = async (id: number) => {
     const isSaved = savedModules.includes(id);
@@ -143,12 +316,24 @@ export default function BrowsePage() {
     }
   };
 
-  const updateFilter = (category: 'location', value: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      // Toggle logic: if already selected, deselect it. Otherwise select it.
-      [category]: prev[category] === value ? undefined : value
-    }));
+  const updateFilter = (category: keyof typeof activeFilters, value: string | number) => {
+    setActiveFilters(prev => {
+        // Handle array toggles
+        if (Array.isArray(prev[category])) {
+            const arr = prev[category] as (string | number)[];
+            if (arr.includes(value)) {
+                return { ...prev, [category]: arr.filter(item => item !== value) };
+            } else {
+                return { ...prev, [category]: [...arr, value] };
+            }
+        }
+        // Handle simple value
+        return { ...prev, [category]: value };
+    });
+  };
+  
+  const setFilterValue = (category: keyof typeof activeFilters, value: unknown) => {
+      setActiveFilters(prev => ({ ...prev, [category]: value }));
   };
 
   return (
@@ -183,9 +368,9 @@ export default function BrowsePage() {
             <input
               type="search"
               placeholder={t('browse.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyPress}
+              value={activeFilters.search}
+              onChange={(e) => setFilterValue('search', e.target.value)}
+              onKeyDown={(e) => { if(e.key === 'Enter') handleApplyFilters(); }}
               className="w-full rounded-xl border-2 border-border-light bg-foreground-light py-3 pl-12 pr-4 text-sm text-text-primary-light shadow-sm outline-none ring-0 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-foreground-dark dark:text-text-primary-dark"
             />
           </motion.div>
@@ -260,26 +445,191 @@ export default function BrowsePage() {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden lg:!h-auto lg:!opacity-100"
                 >
-                  <div className="flex flex-col gap-6 text-sm">
+                  <div className="flex flex-col gap-6 text-sm max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
                     {/* Location Filter */}
-                    <div className="filter-section">
-                      <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
-                        {t('browse.location')}
-                      </h4>
-                      <div className="flex flex-col gap-2">
-                        {['Breda', "Den Bosch", 'Tilburg'].map((loc) => (
-                          <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
-                            <input
-                              type="checkbox"
-                              checked={activeFilters.location === loc}
-                              onChange={() => updateFilter('location', loc)}
-                              className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
-                            />
-                            <span className="transition-transform duration-300 group-hover:translate-x-1">{loc}</span>
-                          </label>
-                        ))}
-                      </div>
+                     <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Locatie
+                        </h4>
+                        <div className="flex flex-col gap-2">
+                            {['Breda', "Den Bosch", 'Tilburg'].map((loc) => (
+                                <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={activeFilters.locations.includes(loc)}
+                                        onChange={() => updateFilter('locations', loc)}
+                                        className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                    />
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">{loc}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
+
+                    {/* EC Filter */}
+                    <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Studiepunten (EC)
+                        </h4>
+                        <div className="flex flex-col gap-2">
+                            {[15, 30].map((ec) => (
+                                <label key={ec} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={activeFilters.ecs.includes(ec)}
+                                        onChange={() => updateFilter('ecs', ec)}
+                                        className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                    />
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">{ec} EC</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Level Filter */}
+                    <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Niveau
+                        </h4>
+                        <div className="flex flex-col gap-2">
+                            {['NLQF5', 'NLQF6'].map((lvl) => (
+                                <label key={lvl} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={activeFilters.levels.includes(lvl)}
+                                        onChange={() => updateFilter('levels', lvl)}
+                                        className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                    />
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">{lvl}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Start Date Filter */}
+                    {availableMonths.length > 0 && (
+                        <div className="filter-section">
+                            <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                              Start Datum
+                            </h4>
+                            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                {availableMonths.map((m) => (
+                                    <label key={m} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                                        <input
+                                            type="checkbox"
+                                            checked={activeFilters.startMonths.includes(m)}
+                                            onChange={() => updateFilter('startMonths', m)}
+                                            className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                        />
+                                        <span className="transition-transform duration-300 group-hover:translate-x-1">{m}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Difficulty Filter */}
+                    <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Moeilijkheid (Sterren)
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                            {[1, 2, 3, 4, 5].map((d) => (
+                                <label key={d} className={`flex size-10 cursor-pointer items-center justify-center rounded-lg border-2 transition-all ${activeFilters.difficulty.includes(d) ? 'border-primary bg-primary text-white' : 'border-border-light hover:border-primary text-text-secondary-light dark:border-border-dark dark:text-text-secondary-dark'}`}>
+                                    <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={activeFilters.difficulty.includes(d)}
+                                        onChange={() => updateFilter('difficulty', d)}
+                                    />
+                                    <span className="font-bold">{d}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Spots Range */}
+                    <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Beschikbare Plaatsen
+                        </h4>
+                        <div className="flex items-center gap-3">
+                            <input 
+                                type="number" 
+                                className="w-full rounded-lg border-2 border-border-light bg-transparent px-3 py-2 text-sm outline-none focus:border-primary dark:border-border-dark"
+                                placeholder="0"
+                                value={activeFilters.spotsRange[0]}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 0;
+                                    setFilterValue('spotsRange', [val, activeFilters.spotsRange[1]]);
+                                }}
+                            />
+                            <span className="text-text-secondary-light">-</span>
+                            <input 
+                                type="number" 
+                                className="w-full rounded-lg border-2 border-border-light bg-transparent px-3 py-2 text-sm outline-none focus:border-primary dark:border-border-dark"
+                                placeholder="100"
+                                value={activeFilters.spotsRange[1]}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 100;
+                                    setFilterValue('spotsRange', [activeFilters.spotsRange[0], val]);
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Tags Filter */}
+                     <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Tags
+                        </h4>
+                        <input 
+                             type="text" 
+                             className="mb-3 w-full rounded-lg border-2 border-border-light bg-transparent px-3 py-2 text-sm outline-none focus:border-primary dark:border-border-dark"
+                             placeholder="Zoek tags..."
+                             value={tagSearch}
+                             onChange={(e) => setTagSearch(e.target.value)}
+                        />
+                        <div className="flex max-h-40 flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar">
+                            {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).map((tag) => (
+                                <label key={tag} className="group flex cursor-pointer items-center gap-x-3 py-1 transition-colors hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={activeFilters.selectedTags.includes(tag)}
+                                        onChange={() => updateFilter('selectedTags', tag)}
+                                        className="size-4 shrink-0 cursor-pointer rounded border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                                    />
+                                    <span className="line-clamp-1 text-xs transition-transform duration-300 group-hover:translate-x-1">{tag}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Optional Scores */}
+                     <div className="filter-section">
+                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                          Scores
+                        </h4>
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <label className="mb-1 block text-xs text-text-secondary-light">Interesses Match (0.0 - 1.0)</label>
+                                <div className="flex items-center gap-2">
+                                     <input type="number" step="0.1" min="0" max="1" className="w-full rounded-md border border-border-light bg-transparent px-2 py-1 text-xs dark:border-border-dark" value={activeFilters.interestsScoreRange[0]} onChange={e => setFilterValue('interestsScoreRange', [parseFloat(e.target.value), activeFilters.interestsScoreRange[1]])} />
+                                     <span>-</span>
+                                     <input type="number" step="0.1" min="0" max="1" className="w-full rounded-md border border-border-light bg-transparent px-2 py-1 text-xs dark:border-border-dark" value={activeFilters.interestsScoreRange[1]} onChange={e => setFilterValue('interestsScoreRange', [activeFilters.interestsScoreRange[0], parseFloat(e.target.value)])} />
+                                </div>
+                            </div>
+                             <div>
+                                <label className="mb-1 block text-xs text-text-secondary-light">Populariteit (Score)</label>
+                                <div className="flex items-center gap-2">
+                                     <input type="number" step="10" className="w-full rounded-md border border-border-light bg-transparent px-2 py-1 text-xs dark:border-border-dark" value={activeFilters.popularityScoreRange[0]} onChange={e => setFilterValue('popularityScoreRange', [parseInt(e.target.value) || 0, activeFilters.popularityScoreRange[1]])} />
+                                     <span>-</span>
+                                     <input type="number" step="10" className="w-full rounded-md border border-border-light bg-transparent px-2 py-1 text-xs dark:border-border-dark" value={activeFilters.popularityScoreRange[1]} onChange={e => setFilterValue('popularityScoreRange', [activeFilters.popularityScoreRange[0], parseInt(e.target.value) || 500])} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                   </div>
 
                   <motion.button
