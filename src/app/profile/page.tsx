@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { userService, moduleService, UserPreferences } from '@/services/userService';
 import Link from 'next/link';
+import { useTranslation } from '@/components/providers/LanguageProvider';
 
 interface UserProfile {
     name: string;
@@ -19,6 +20,7 @@ interface Module {
 }
 
 export default function ProfilePage() {
+    const { t, language } = useTranslation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [modules, setModules] = useState<Module[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,27 +54,27 @@ export default function ProfilePage() {
         e.preventDefault();
         try {
             await userService.updateProfile({ name });
-            alert("Profiel bijgewerkt!");
+            alert(t('profile.profileUpdated'));
         } catch (error) {
             console.error("Update failed", error);
-            alert("Fout bij bijwerken profiel.");
+            alert(t('profile.profileUpdateError'));
         }
     };
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (password !== confirmPassword) {
-            alert("Wachtwoorden komen niet overeen!");
+            alert(t('auth.passwordsDontMatch'));
             return;
         }
         try {
             await userService.updateProfile({ password });
-            alert("Wachtwoord bijgewerkt!");
+            alert(t('profile.passwordUpdated'));
             setPassword('');
             setConfirmPassword('');
         } catch (error) {
             console.error("Update failed", error);
-            alert("Fout bij bijwerken wachtwoord.");
+            alert(t('profile.passwordUpdateError'));
         }
     };
 
@@ -86,21 +88,21 @@ export default function ProfilePage() {
     };
 
     const handleClearAllRecommendations = async () => {
-        if (!confirm('Weet je zeker dat je alle aanbevelingen wilt verwijderen?')) return;
+        if (!confirm(language === 'nl' ? 'Weet je zeker dat je alle aanbevelingen wilt verwijderen?' : 'Are you sure you want to delete all recommendations?')) return;
         try {
             await userService.clearRecommendations();
             setProfile(prev => prev ? { ...prev, recommendations: [] } : null);
-            alert('Alle aanbevelingen verwijderd!');
+            alert(t('profile.recommendationsCleared'));
         } catch (error) {
             console.error("Clear all failed", error);
-            alert('Fout bij verwijderen van aanbevelingen.');
+            alert(t('profile.clearError'));
         }
     };
 
     const handleClearPreferences = async (clearRecsAlso: boolean = false) => {
         const confirmMessage = clearRecsAlso
-            ? 'Weet je zeker dat je alle voorkeuren EN aanbevelingen wilt verwijderen?'
-            : 'Weet je zeker dat je alle voorkeuren wilt verwijderen?';
+            ? (language === 'nl' ? 'Weet je zeker dat je alle voorkeuren EN aanbevelingen wilt verwijderen?' : 'Are you sure you want to delete all preferences AND recommendations?')
+            : (language === 'nl' ? 'Weet je zeker dat je alle voorkeuren wilt verwijderen?' : 'Are you sure you want to delete all preferences?');
         if (!confirm(confirmMessage)) return;
         try {
             await userService.clearPreferences(clearRecsAlso);
@@ -109,23 +111,23 @@ export default function ProfilePage() {
                 preferences: undefined,
                 recommendations: clearRecsAlso ? [] : prev.recommendations
             } : null);
-            alert('Voorkeuren verwijderd!');
+            alert(t('profile.preferencesCleared'));
         } catch (error) {
             console.error("Clear preferences failed", error);
-            alert('Fout bij verwijderen van voorkeuren.');
+            alert(t('profile.clearError'));
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Laden...</div>;
+    if (loading) return <div className="p-8 text-center">{t('common.loading')}</div>;
     if (!profile) return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
             <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">account_circle</span>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Niet ingelogd</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">Log in om je profiel te bekijken en je opgeslagen modules te zien.</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('profile.notLoggedIn')}</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">{t('profile.loginPrompt')}</p>
             <Link href="/login">
                 <button className="flex items-center gap-2 px-6 py-3 bg-[#E4002B] text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all">
                     <span className="material-symbols-outlined">login</span>
-                    Inloggen
+                    {t('common.login')}
                 </button>
             </Link>
         </div>
@@ -167,16 +169,16 @@ export default function ProfilePage() {
                         {/* Sidebar nav */}
                         <nav className="flex flex-col gap-2 pt-4 text-sm">
                             {[
-                                { id: 'account', icon: 'person', label: 'Accountinstellingen' },
-                                { id: 'modules', icon: 'bookmark', label: 'Mijn Modules' },
-                                { id: 'preferences', icon: 'tune', label: 'Mijn Voorkeuren' },
+                                { id: 'account', icon: 'person', labelKey: 'profile.accountSettings' },
+                                { id: 'modules', icon: 'bookmark', labelKey: 'profile.myModules' },
+                                { id: 'preferences', icon: 'tune', labelKey: 'profile.myPreferences' },
                             ].map((item, index) => (
                                 <motion.button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
                                     className={`flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-300 ${activeTab === item.id
-                                            ? 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary shadow-md'
-                                            : 'text-gray-700 hover:bg-gray-100 hover:scale-105 dark:text-text-dark dark:hover:bg-border-dark'
+                                        ? 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary shadow-md'
+                                        : 'text-gray-700 hover:bg-gray-100 hover:scale-105 dark:text-text-dark dark:hover:bg-border-dark'
                                         }`}
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -184,7 +186,7 @@ export default function ProfilePage() {
                                     whileHover={{ x: 5 }}
                                 >
                                     <span className="material-symbols-outlined text-xl">{item.icon}</span>
-                                    <span>{item.label}</span>
+                                    <span>{t(item.labelKey)}</span>
                                 </motion.button>
                             ))}
                             <motion.button
@@ -196,7 +198,7 @@ export default function ProfilePage() {
                                 }}
                             >
                                 <span className="material-symbols-outlined text-xl">logout</span>
-                                <span>Uitloggen</span>
+                                <span>{t('common.logout')}</span>
                             </motion.button>
                         </nav>
                     </div>
@@ -217,7 +219,7 @@ export default function ProfilePage() {
                             <section className="rounded-2xl border-2 border-border-light bg-foreground-light p-6 shadow-lg md:p-8 dark:border-border-dark dark:bg-card-dark">
                                 <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-gray-200 pb-6 dark:border-border-dark">
                                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-text-dark">
-                                        Accountinstellingen
+                                        {t('profile.accountSettings')}
                                     </h2>
                                 </div>
 
@@ -230,7 +232,7 @@ export default function ProfilePage() {
                                             transition={{ delay: 0.3 }}
                                         >
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
-                                                Volledige naam
+                                                {t('profile.fullName')}
                                             </span>
                                             <input
                                                 className="h-12 rounded-xl border-2 border-gray-300 bg-gray-50 px-4 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark"
@@ -245,7 +247,7 @@ export default function ProfilePage() {
                                             transition={{ delay: 0.4 }}
                                         >
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
-                                                E-mailadres
+                                                {t('profile.emailAddress')}
                                             </span>
                                             <input
                                                 className="h-12 rounded-xl border-2 border-gray-300 bg-gray-50 px-4 text-sm text-gray-900 shadow-sm outline-none ring-0 placeholder:text-gray-400 transition-all duration-300 focus:border-primary focus:shadow-lg focus:shadow-primary/20 dark:border-border-dark dark:bg-background-dark dark:text-text-dark dark:placeholder:text-text-muted-dark"
@@ -267,7 +269,7 @@ export default function ProfilePage() {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                         >
-                                            <span>Wijzigingen opslaan</span>
+                                            <span>{t('profile.saveChanges')}</span>
                                             <span className="material-symbols-outlined text-lg">save</span>
                                         </motion.button>
                                     </motion.div>
@@ -282,10 +284,10 @@ export default function ProfilePage() {
                                 transition={{ duration: 0.6, delay: 0.4 }}
                             >
                                 <h3 className="pb-2 text-xl font-bold text-gray-900 md:text-2xl dark:text-text-dark">
-                                    Wachtwoord wijzigen
+                                    {t('profile.changePassword')}
                                 </h3>
                                 <p className="border-b-2 border-gray-200 pb-6 text-sm text-text-muted-light dark:border-border-dark dark:text-text-muted-dark">
-                                    Update uw wachtwoord.
+                                    {t('profile.updatePasswordDesc')}
                                 </p>
 
                                 <form className="mt-6 space-y-6" onSubmit={handleUpdatePassword}>
@@ -297,7 +299,7 @@ export default function ProfilePage() {
                                             transition={{ delay: 0.5 }}
                                         >
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
-                                                Nieuw wachtwoord
+                                                {t('profile.newPassword')}
                                             </span>
                                             <input
                                                 type="password"
@@ -314,7 +316,7 @@ export default function ProfilePage() {
                                             transition={{ delay: 0.6 }}
                                         >
                                             <span className="pb-2 text-sm font-semibold text-gray-800 dark:text-text-dark">
-                                                Bevestig wachtwoord
+                                                {t('profile.confirmPassword')}
                                             </span>
                                             <input
                                                 type="password"
@@ -333,7 +335,7 @@ export default function ProfilePage() {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                         >
-                                            <span>Wachtwoord updaten</span>
+                                            <span>{t('profile.updatePassword')}</span>
                                             <span className="material-symbols-outlined text-lg">lock</span>
                                         </motion.button>
                                     </div>
@@ -346,14 +348,14 @@ export default function ProfilePage() {
                         <section className="rounded-2xl border-2 border-border-light bg-foreground-light p-6 shadow-lg md:p-8 dark:border-border-dark dark:bg-card-dark">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-text-dark">
-                                    Mijn Opgeslagen Modules
+                                    {t('profile.mySavedModules')}
                                 </h2>
                                 {savedModules.length > 0 && (
                                     <button
                                         onClick={handleClearAllRecommendations}
                                         className="rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
                                     >
-                                        Alles verwijderen
+                                        {t('profile.clearAll')}
                                     </button>
                                 )}
                             </div>
@@ -361,10 +363,10 @@ export default function ProfilePage() {
                                 {savedModules.length === 0 ? (
                                     <div className="text-center py-8">
                                         <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-700 mb-4">bookmark_border</span>
-                                        <p className="text-gray-500">Geen modules opgeslagen.</p>
+                                        <p className="text-gray-500">{t('profile.noModules')}</p>
                                         <Link href="/recommendations">
                                             <button className="mt-4 rounded-lg bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors">
-                                                Doe de aanbevelingstest
+                                                {t('profile.takeTest')}
                                             </button>
                                         </Link>
                                     </div>
@@ -378,14 +380,14 @@ export default function ProfilePage() {
                                             <div className='flex gap-2'>
                                                 <Link href={`/browse/${m.id}`}>
                                                     <button className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">
-                                                        Bekijk
+                                                        {t('common.view')}
                                                     </button>
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDeleteRecommendation(m.id)}
                                                     className="rounded-lg bg-red-100 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
                                                 >
-                                                    Verwijder
+                                                    {t('common.delete')}
                                                 </button>
                                             </div>
                                         </div>
@@ -399,7 +401,7 @@ export default function ProfilePage() {
                         <section className="rounded-2xl border-2 border-border-light bg-foreground-light p-6 shadow-lg md:p-8 dark:border-border-dark dark:bg-card-dark">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-text-dark">
-                                    Mijn Voorkeuren
+                                    {t('profile.myPreferences')}
                                 </h2>
                                 {profile?.preferences && (
                                     <div className="flex gap-2">
@@ -407,13 +409,13 @@ export default function ProfilePage() {
                                             onClick={() => handleClearPreferences(false)}
                                             className="rounded-lg bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 transition-colors"
                                         >
-                                            Voorkeuren wissen
+                                            {t('profile.clearPreferences')}
                                         </button>
                                         <button
                                             onClick={() => handleClearPreferences(true)}
                                             className="rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
                                         >
-                                            Alles wissen
+                                            {t('profile.clearAll')}
                                         </button>
                                     </div>
                                 )}
@@ -425,10 +427,10 @@ export default function ProfilePage() {
                                     <div className="rounded-xl border border-gray-200 p-4 dark:border-border-dark">
                                         <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-primary">interests</span>
-                                            Jouw Interesses
+                                            {t('profile.yourInterests')}
                                         </h4>
                                         <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                            {profile.preferences.interests || 'Geen interesses opgegeven'}
+                                            {profile.preferences.interests || t('profile.noInterestsSet')}
                                         </p>
                                     </div>
 
@@ -436,10 +438,10 @@ export default function ProfilePage() {
                                     <div className="rounded-xl border border-gray-200 p-4 dark:border-border-dark">
                                         <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-primary">location_on</span>
-                                            Voorkeurslocatie
+                                            {t('profile.preferredLocation')}
                                         </h4>
                                         <p className="text-gray-600 dark:text-gray-400">
-                                            {profile.preferences.location === 'any' ? 'Geen voorkeur' : profile.preferences.location}
+                                            {profile.preferences.location === 'any' ? t('profile.noPreference') : profile.preferences.location}
                                         </p>
                                     </div>
 
@@ -448,7 +450,7 @@ export default function ProfilePage() {
                                         <div className="rounded-xl border border-gray-200 p-4 dark:border-border-dark">
                                             <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-primary">label</span>
-                                                Gekozen Tags
+                                                {t('profile.selectedTags')}
                                             </h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {profile.preferences.selectedTags.map(tag => (
@@ -465,16 +467,16 @@ export default function ProfilePage() {
                                         <div className="rounded-xl border border-gray-200 p-4 dark:border-border-dark">
                                             <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-primary">school</span>
-                                                Minimum EC
+                                                {t('profile.minEC')}
                                             </h4>
                                             <p className="text-2xl font-bold text-primary">{profile.preferences.minEc} EC</p>
                                         </div>
                                         <div className="rounded-xl border border-gray-200 p-4 dark:border-border-dark">
                                             <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-primary">trending_up</span>
-                                                Max. Niveau
+                                                {t('profile.maxLevel')}
                                             </h4>
-                                            <p className="text-2xl font-bold text-primary">Niveau {profile.preferences.maxDifficulty}</p>
+                                            <p className="text-2xl font-bold text-primary">{t('profile.level')} {profile.preferences.maxDifficulty}</p>
                                         </div>
                                     </div>
 
@@ -486,7 +488,7 @@ export default function ProfilePage() {
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                             >
-                                                <span>Opnieuw testen</span>
+                                                <span>{t('profile.retakeTest')}</span>
                                                 <span className="material-symbols-outlined text-lg">refresh</span>
                                             </motion.button>
                                         </Link>
@@ -495,14 +497,14 @@ export default function ProfilePage() {
                             ) : (
                                 <div className="text-center py-8">
                                     <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-700 mb-4">tune</span>
-                                    <p className="text-gray-500 mb-4">Je hebt nog geen voorkeuren ingesteld.</p>
+                                    <p className="text-gray-500 mb-4">{t('profile.noPreferences')}</p>
                                     <Link href="/recommendations">
                                         <motion.button
                                             className="inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                         >
-                                            <span>Start de Aanbevelingstest</span>
+                                            <span>{t('profile.startTest')}</span>
                                             <span className="material-symbols-outlined text-lg">arrow_forward</span>
                                         </motion.button>
                                     </Link>

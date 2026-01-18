@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind v4: Configure dark mode to use class selector */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* already used across the app */
   --color-primary: #e60000;

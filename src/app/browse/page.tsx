@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { moduleService, userService } from '@/services/userService';
+import { useTranslation } from '@/components/providers/LanguageProvider';
 
 interface Module {
   _id: string; // The backend returns _id from Mongoose
@@ -34,6 +35,7 @@ interface Module {
 }
 
 export default function BrowsePage() {
+  const { t, language } = useTranslation();
   const [modules, setModules] = useState<Module[]>([]);
   const [savedModules, setSavedModules] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,7 +74,7 @@ export default function BrowsePage() {
         search: searchQuery,
         sort: activeFilters.sort
       };
-      
+
       if (activeFilters.location) apiFilters.location = activeFilters.location;
 
       const [allModules, userProfile] = await Promise.all([
@@ -160,10 +162,10 @@ export default function BrowsePage() {
       >
         <div className="flex flex-col gap-3">
           <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl lg:text-5xl">
-            Browse Vrije Keuze Modules
+            {t('browse.title')}
           </h1>
           <p className="text-base text-text-secondary-light dark:text-text-secondary-dark md:text-lg">
-            Verken en filter alle beschikbare VKM&apos;s.
+            {t('browse.subtitle')}
           </p>
         </div>
 
@@ -180,7 +182,7 @@ export default function BrowsePage() {
             </div>
             <input
               type="search"
-              placeholder="Zoek op naam of code..."
+              placeholder={t('browse.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyPress}
@@ -207,9 +209,9 @@ export default function BrowsePage() {
                 // For this implementation, I'll rely on the "Filters toepassen" button for everything to be safe and explicit.
               }}
             >
-              <option value="recommended">Sorteer: Aanbevolen</option>
-              <option value="popularity">Sorteer: Populariteit</option>
-              <option value="az">Sorteer: A-Z</option>
+              <option value="recommended">{t('browse.sortRecommended')}</option>
+              <option value="popularity">{t('browse.sortPopularity')}</option>
+              <option value="az">{t('browse.sortAZ')}</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
               <span className="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">
@@ -240,7 +242,7 @@ export default function BrowsePage() {
                     filter_alt
                   </span>
                 </div>
-                <h3 className="text-lg font-bold">Filters</h3>
+                <h3 className="text-lg font-bold">{t('browse.filters')}</h3>
               </div>
               <span className="material-symbols-outlined text-gray-500 transition-transform lg:hidden"
                 style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -260,23 +262,23 @@ export default function BrowsePage() {
                 >
                   <div className="flex flex-col gap-6 text-sm">
                     {/* Location Filter */}
-                     <div className="filter-section">
-                        <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
-                          Locatie
-                        </h4>
-                        <div className="flex flex-col gap-2">
-                            {['Breda', "Den Bosch", 'Tilburg'].map((loc) => (
-                                <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
-                                    <input
-                                        type="checkbox"
-                                        checked={activeFilters.location === loc}
-                                        onChange={() => updateFilter('location', loc)}
-                                        className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
-                                    />
-                                    <span className="transition-transform duration-300 group-hover:translate-x-1">{loc}</span>
-                                </label>
-                            ))}
-                        </div>
+                    <div className="filter-section">
+                      <h4 className="mb-3 font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                        {t('browse.location')}
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        {['Breda', "Den Bosch", 'Tilburg'].map((loc) => (
+                          <label key={loc} className="group flex cursor-pointer items-center gap-x-3 py-2 transition-colors hover:text-primary">
+                            <input
+                              type="checkbox"
+                              checked={activeFilters.location === loc}
+                              onChange={() => updateFilter('location', loc)}
+                              className="size-5 cursor-pointer rounded-md border-2 border-border-light bg-transparent text-primary transition-all duration-300 checked:border-primary checked:bg-primary"
+                            />
+                            <span className="transition-transform duration-300 group-hover:translate-x-1">{loc}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -286,55 +288,55 @@ export default function BrowsePage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <span>Filters toepassen</span>
+                    <span>{t('browse.applyFilters')}</span>
                     <span className="material-symbols-outlined text-lg">check</span>
                   </motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
             {!showFilters && (
-              <p className="text-xs text-gray-500 text-center lg:hidden">Tik om filters te tonen</p>
+              <p className="text-xs text-gray-500 text-center lg:hidden">{t('browse.tapToShowFilters')}</p>
             )}
           </div>
         </motion.aside>
 
         {/* Modules grid */}
         <main className="flex w-full flex-col gap-8">
-           {/* CTA Banner logic unchanged */}
-           {isLoggedIn && !hasRecommendations && !loading && (
-             <motion.div
-               className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 p-6 shadow-lg md:p-8"
-               initial={{ opacity: 0, y: -20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6 }}
-             >
-               <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-                 <div className="flex items-start gap-4">
-                   <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                     <span className="material-symbols-outlined text-2xl text-primary">auto_awesome</span>
-                   </div>
-                   <div>
-                     <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
-                       Vind jouw perfecte module!
-                     </h3>
-                     <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                       Doe onze AI-aanbevelingstest en ontdek welke modules het beste bij jou passen.
-                     </p>
-                   </div>
-                 </div>
-                 <Link href="/recommendations">
-                   <motion.button
-                     className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
-                     whileHover={{ scale: 1.05 }}
-                     whileTap={{ scale: 0.95 }}
-                   >
-                     <span>Start de Wizard</span>
-                     <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                   </motion.button>
-                 </Link>
-               </div>
-             </motion.div>
-           )}
+          {/* CTA Banner logic unchanged */}
+          {isLoggedIn && !hasRecommendations && !loading && (
+            <motion.div
+              className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 p-6 shadow-lg md:p-8"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <span className="material-symbols-outlined text-2xl text-primary">auto_awesome</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
+                      {t('browse.findPerfectModule')}
+                    </h3>
+                    <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                      {t('browse.takeAITest')}
+                    </p>
+                  </div>
+                </div>
+                <Link href="/recommendations">
+                  <motion.button
+                    className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-primary/30"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span>{t('browse.startWizard')}</span>
+                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                  </motion.button>
+                </Link>
+              </div>
+            </motion.div>
+          )}
 
 
           {loading ? (
@@ -350,7 +352,7 @@ export default function BrowsePage() {
               </div>
             </motion.div>
           ) : modules.length === 0 ? (
-            <div className="p-8 text-center text-text-secondary-light dark:text-text-secondary-dark">Geen modules gevonden.</div>
+            <div className="p-8 text-center text-text-secondary-light dark:text-text-secondary-dark">{t('browse.noModulesFound')}</div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
               {modules.map((module: Module, index: number) => (
@@ -392,9 +394,9 @@ export default function BrowsePage() {
                           auto_awesome
                         </span>
                         <div>
-                          <p className="text-xs font-bold text-primary">Aanbevolen voor jou</p>
+                          <p className="text-xs font-bold text-primary">{t('browse.recommendedForYou')}</p>
                           <p className="text-xs leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
-                            Op basis van jouw voorkeuren
+                            {t('browse.basedOnPreferences')}
                           </p>
                         </div>
                       </div>
@@ -404,7 +406,7 @@ export default function BrowsePage() {
                     <div className="flex items-center gap-3">
                       <Link href={`/browse/${module.id}`} className="flex-1">
                         <button className="group/btn flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold tracking-wide text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/50">
-                          <span>View Details</span>
+                          <span>{t('browse.viewDetails')}</span>
                           <span className="material-symbols-outlined text-lg transition-transform duration-300 group-hover/btn:translate-x-1">
                             arrow_forward
                           </span>
