@@ -3,6 +3,7 @@ import './globals.css';
 import { Lexend } from 'next/font/google';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import { Providers } from '../components/providers/Providers';
 
 const lexend = Lexend({
   subsets: ['latin'],
@@ -10,9 +11,9 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: 'Avans Keuze Kompas - Vind jouw perfecte Vrije Keuze Module met AI',
+  title: 'Avans Keuze Kompas - Find your perfect Elective Module with AI',
   description:
-    'Stop met eindeloos zoeken. Krijg persoonlijke aanbevelingen op basis van jouw interesses en studie.',
+    'Stop endlessly searching. Get personal recommendations based on your interests and studies.',
 };
 
 export default function RootLayout({
@@ -21,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="nl" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -39,20 +40,24 @@ export default function RootLayout({
       <body
         className={`${lexend.className} min-h-screen bg-background-light text-text-primary-light dark:bg-background-dark dark:text-text-primary-dark`}
       >
-        {/* Full-screen column layout */}
-        <div className="flex min-h-screen flex-col">
-          {/* Navbar full width */}
-          <Navbar />
+        <Providers>
+          {/* Full-screen column layout */}
+          <div className="flex min-h-screen flex-col">
+            {/* Navbar full width */}
+            <Navbar />
 
-          {/* Main content - now full width, pages control their own containers */}
-          <main className="flex-1 w-full">
-            {children}
-          </main>
+            {/* Main content - now full width, pages control their own containers */}
+            <main className="flex-1 w-full">
+              {children}
+            </main>
 
-          {/* Footer full width */}
-          <Footer />
-        </div>
+            {/* Footer full width */}
+            <Footer />
+          </div>
+        </Providers>
       </body>
     </html>
   );
 }
+
+

@@ -7,7 +7,6 @@ import {
     MapPin,
     BookOpen,
     BarChart2,
-
     Check,
     ChevronRight,
     Sparkles,
@@ -16,9 +15,11 @@ import {
     X,
     AlertCircle,
 } from 'lucide-react';
+
 import { fetchRecommendations, RecommendationWeights } from '@/services/recommendationService';
 import { RecommendedModule } from '@/types/recommendations';
 import { RecommendationResultCard } from './RecommendationResultCard';
+import { useTranslation } from '../providers/LanguageProvider';
 import { SmartTagSelector } from './SmartTagSelector';
 import ALL_TAGS from '../../data/moduleTags.json';
 
@@ -30,8 +31,9 @@ interface RecommendationsResponse {
         userIdFromMiddleware?: string;
     };
 }
-// Tags are now loaded from the comprehensive moduleTags.json (652 tags)
-// and managed by the SmartTagSelector component
+
+// De oude AVAILABLE_TAGS is hier verwijderd. 
+// We vertrouwen nu volledig op SmartTagSelector en moduleTags.json.
 
 interface WizardState {
     interests: string;
@@ -57,7 +59,16 @@ const INITIAL_STATE: WizardState = {
     }
 };
 
-const LOCATIONS = [
+// Tip: Omdat je useTranslation gebruikt, kun je deze labels later 
+// ook via je vertaalbestanden laten lopen!
+const LOCATIONS_EN = [
+    { id: 'any', label: 'Any location', desc: 'Anywhere in Brabant' },
+    { id: 'breda', label: 'Breda', desc: 'Cozy student city' },
+    { id: 'den bosch', label: "'s-Hertogenbosch", desc: 'Burgundian & Culture' },
+    { id: 'tilburg', label: 'Tilburg', desc: 'Creative & Raw' },
+];
+
+const LOCATIONS_NL = [
     { id: 'any', label: 'Geen voorkeur', desc: 'Overal in Brabant' },
     { id: 'breda', label: 'Breda', desc: 'Gezellige studentenstad' },
     { id: 'den bosch', label: "'s-Hertogenbosch", desc: 'Bourgondisch & Cultuur' },
@@ -66,6 +77,9 @@ const LOCATIONS = [
 
 // ------------ COMPONENT ----------------
 export const RecommendationWizardV2: React.FC = () => {
+    const { t, language } = useTranslation();
+    const LOCATIONS = language === 'nl' ? LOCATIONS_NL : LOCATIONS_EN;
+
     // Stage Management
     // 0: Intro, 1: Interests, 2: Location, 3: Filters (EC/Diff), 4: Tags, 5: Loading/Results
     const [step, setStep] = useState(0);
@@ -138,7 +152,7 @@ export const RecommendationWizardV2: React.FC = () => {
 
         } catch (err) {
             console.error(err);
-            setError('Kan geen aanbevelingen ophalen. Probeer het later opnieuw.');
+            setError(language === 'nl' ? 'Kan geen aanbevelingen ophalen. Probeer het later opnieuw.' : 'Could not fetch recommendations. Please try again later.');
         } finally {
             setLoading(false);
         }
@@ -185,17 +199,16 @@ export const RecommendationWizardV2: React.FC = () => {
                             <Sparkles className="w-12 h-12 md:w-16 md:h-16 text-avans-red" />
                         </motion.div>
                         <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight">
-                            Vind jouw <span className="text-avans-red">Match</span>
+                            {t('wizard.findYour')} <span className="text-avans-red">{language === 'nl' ? 'Match' : 'Match'}</span>
                         </h1>
                         <p className="text-lg md:text-xl text-gray-500 font-light leading-relaxed">
-                            Geen idee welke minor je moet kiezen? <br className="hidden md:block" />
-                            Onze AI helpt je in 3 simpele stappen.
+                            {t('wizard.introText')}
                         </p>
                         <button
                             onClick={nextStep}
                             className="mt-6 md:mt-8 px-8 py-4 md:px-10 md:py-5 bg-[#E4002B] text-white text-lg md:text-xl font-bold rounded-full hover:scale-105 hover:shadow-2xl shadow-xl shadow-red-500/40 ring-4 ring-red-500/20 transition-all flex items-center gap-3"
                         >
-                            Start de Wizard <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
+                            {t('wizard.startWizard')} <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
                     </div>
                 );
@@ -204,32 +217,32 @@ export const RecommendationWizardV2: React.FC = () => {
                 return (
                     <div className="w-full max-w-2xl px-4 md:px-6 space-y-6 md:space-y-8">
                         <div className="space-y-2">
-                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">Stap 1/4</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Waar ligt je passie?</h2>
-                            <p className="text-lg text-gray-500">Vertel ons wat je leuk vindt, waar je goed in bent, of wat je later wilt worden.</p>
+                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">{language === 'nl' ? 'Stap 1/4' : 'Step 1/4'}</span>
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{t('wizard.step1Title')}</h2>
+                            <p className="text-lg text-gray-500">{t('wizard.step1Subtitle')}</p>
                         </div>
 
                         <div className="relative">
                             <textarea
                                 value={formData.interests}
                                 onChange={(e) => setFormData({ ...formData, interests: e.target.value })}
-                                placeholder="Ik hou van programmeren, maar wil ook meer leren over design en marketing..."
+                                placeholder={t('wizard.interestsPlaceholder')}
                                 className="w-full h-48 md:h-64 p-6 md:p-8 text-lg md:text-xl font-medium bg-white dark:bg-gray-800 rounded-2xl md:rounded-[2rem] border-0 shadow-lg md:shadow-xl focus:ring-4 focus:ring-avans-red/20 resize-none placeholder:text-gray-300 dark:placeholder:text-gray-600 transition-all"
                                 autoFocus
                             />
                             <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-xs md:text-sm font-medium text-gray-400 bg-gray-50 dark:bg-gray-900 px-3 py-1 rounded-lg">
-                                {formData.interests.length} tekens
+                                {formData.interests.length} {language === 'nl' ? 'tekens' : 'chars'}
                             </div>
                         </div>
 
                         <div className="flex justify-between items-center pt-4 md:pt-8 gap-4">
-                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 text-sm md:text-base transition-colors">Terug</button>
+                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 text-sm md:text-base transition-colors">{t('common.back')}</button>
                             <button
                                 onClick={nextStep}
                                 disabled={formData.interests.length < 10}
                                 className="px-6 py-3 md:px-8 md:py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all flex items-center gap-2 text-sm md:text-base"
                             >
-                                Volgende <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                                {t('common.next')} <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                             </button>
                         </div>
                     </div>
@@ -239,8 +252,8 @@ export const RecommendationWizardV2: React.FC = () => {
                 return (
                     <div className="w-full max-w-3xl px-4 md:px-6 space-y-8 md:space-y-12">
                         <div className="space-y-2 text-center">
-                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">Stap 2/4</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Kies je campus</h2>
+                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">{language === 'nl' ? 'Stap 2/4' : 'Step 2/4'}</span>
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{t('wizard.step2Title')}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -269,12 +282,12 @@ export const RecommendationWizardV2: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center pt-8">
-                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">Terug</button>
+                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">{t('common.back')}</button>
                             <button
                                 onClick={nextStep}
                                 className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full hover:scale-105 transition-all flex items-center gap-2"
                             >
-                                Volgende <ChevronRight className="w-5 h-5" />
+                                {t('common.next')} <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -284,15 +297,15 @@ export const RecommendationWizardV2: React.FC = () => {
                 return (
                     <div className="w-full max-w-xl px-4 md:px-6 space-y-8 md:space-y-12">
                         <div className="space-y-2">
-                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">Stap 3/4</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Jouw voorkeuren</h2>
+                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">{language === 'nl' ? 'Stap 3/4' : 'Step 3/4'}</span>
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{t('wizard.step3Title')}</h2>
                         </div>
 
                         {/* EC */}
                         <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm space-y-6">
                             <div className="flex justify-between items-center">
                                 <label className="text-lg md:text-xl font-bold flex items-center gap-3">
-                                    <BookOpen className="text-gray-400 w-5 h-5 md:w-6 md:h-6" /> <span className="hidden sm:inline">Minimaal aantal</span> EC
+                                    <BookOpen className="text-gray-400 w-5 h-5 md:w-6 md:h-6" /> <span className="hidden sm:inline">{language === 'nl' ? 'Minimaal aantal' : 'Minimum'}</span> EC
                                 </label>
                                 <span className="text-xl md:text-2xl font-mono font-bold text-avans-red">{formData.minEc} EC</span>
                             </div>
@@ -303,7 +316,7 @@ export const RecommendationWizardV2: React.FC = () => {
                                 className="w-full h-3 md:h-4 bg-gray-100 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-avans-red"
                             />
                             <div className="flex justify-between text-xs md:text-sm text-gray-400 font-medium">
-                                <span>Maakt niet uit</span>
+                                <span>{language === 'nl' ? 'Maakt niet uit' : 'Any'}</span>
                                 <span>30 EC</span>
                             </div>
                         </div>
@@ -312,9 +325,9 @@ export const RecommendationWizardV2: React.FC = () => {
                         <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm space-y-6">
                             <div className="flex justify-between items-center">
                                 <label className="text-lg md:text-xl font-bold flex items-center gap-3">
-                                    <BarChart2 className="text-gray-400 w-5 h-5 md:w-6 md:h-6" /> <span className="hidden sm:inline">Maximaal</span> Niveau
+                                    <BarChart2 className="text-gray-400 w-5 h-5 md:w-6 md:h-6" /> <span className="hidden sm:inline">{language === 'nl' ? 'Maximaal' : 'Maximum'}</span> {t('profile.level')}
                                 </label>
-                                <span className="text-xl md:text-2xl font-mono font-bold text-avans-red">Niveau {formData.maxDifficulty}</span>
+                                <span className="text-xl md:text-2xl font-mono font-bold text-avans-red">{t('profile.level')} {formData.maxDifficulty}</span>
                             </div>
                             <input
                                 type="range" min="1" max="5" step="1"
@@ -329,12 +342,12 @@ export const RecommendationWizardV2: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center pt-8">
-                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">Terug</button>
+                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">{t('common.back')}</button>
                             <button
                                 onClick={nextStep}
                                 className="px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full hover:scale-105 transition-all flex items-center gap-2"
                             >
-                                Volgende <ChevronRight className="w-5 h-5" />
+                                {t('common.next')} <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -344,9 +357,9 @@ export const RecommendationWizardV2: React.FC = () => {
                 return (
                     <div className="w-full max-w-4xl px-4 md:px-6 space-y-8 md:space-y-10">
                         <div className="text-center space-y-2">
-                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">Stap 4/4</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Finishing Touch</h2>
-                            <p className="text-lg md:text-xl text-gray-500">Selecteer tags of pas de weging aan (optioneel).</p>
+                            <span className="text-avans-red font-bold uppercase tracking-widest text-xs md:text-sm">{language === 'nl' ? 'Stap 4/4' : 'Step 4/4'}</span>
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{t('wizard.step4Title')}</h2>
+                            <p className="text-lg md:text-xl text-gray-500">{t('wizard.step4Subtitle')}</p>
                         </div>
 
                         {/* Smart Tag Selector with AI suggestions, search, and pagination */}
@@ -364,7 +377,7 @@ export const RecommendationWizardV2: React.FC = () => {
                                 className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors p-4"
                             >
                                 <Settings className="w-4 h-4" />
-                                {showAdvanced ? 'Verberg geavanceerde instellingen' : 'Toon geavanceerde wegingen'}
+                                {showAdvanced ? (language === 'nl' ? 'Verberg geavanceerde instellingen' : 'Hide advanced settings') : (language === 'nl' ? 'Toon geavanceerde wegingen' : 'Show advanced weights')}
                             </button>
 
                             <AnimatePresence>
@@ -411,12 +424,12 @@ export const RecommendationWizardV2: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center pt-4 md:pt-8 gap-4">
-                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">Terug</button>
+                            <button onClick={prevStep} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-4 py-2 transition-colors">{t('common.back')}</button>
                             <button
                                 onClick={handleSearch}
                                 className="px-8 py-4 md:px-12 md:py-5 bg-avans-red text-white text-lg md:text-xl font-bold rounded-full shadow-xl shadow-red-500/20 hover:scale-105 hover:shadow-red-500/40 transition-all flex items-center gap-3"
                             >
-                                Vind mijn matchs <Sparkles className="w-5 h-5 md:w-6 md:h-6 animate-pulse" />
+                                {t('wizard.findMatches')} <Sparkles className="w-5 h-5 md:w-6 md:h-6 animate-pulse" />
                             </button>
                         </div>
                     </div>
@@ -432,10 +445,10 @@ export const RecommendationWizardV2: React.FC = () => {
                     {/* Header */}
                     <div className="text-center space-y-4">
                         <button onClick={restart} className="inline-flex items-center gap-2 text-gray-500 hover:text-avans-red transition-colors mb-4">
-                            <X className="w-4 h-4" /> Reset filters
+                            <X className="w-4 h-4" /> {language === 'nl' ? 'Reset filters' : 'Reset filters'}
                         </button>
                         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
-                            Jouw aanbevelingen
+                            {t('wizard.resultsTitle')}
                         </h2>
 
                         {!saveStatus && (
@@ -470,7 +483,7 @@ export const RecommendationWizardV2: React.FC = () => {
                                 whileTap={{ scale: 0.95 }}
                             >
                                 <span className="material-symbols-outlined">save</span>
-                                Resultaten opslaan op profiel
+                                {t('wizard.saveToProfile')}
                             </motion.button>
                         )}
 
@@ -480,7 +493,7 @@ export const RecommendationWizardV2: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium"
                             >
-                                <Check className="w-4 h-4" /> Succesvol opgeslagen! Bekijk je profiel.
+                                <Check className="w-4 h-4" /> {t('wizard.saved')} {language === 'nl' ? 'Bekijk je profiel.' : 'Check your profile.'}
                             </motion.div>
                         )}
                         {saveStatus === 'failed' && (
@@ -489,10 +502,10 @@ export const RecommendationWizardV2: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full font-medium"
                             >
-                                <AlertCircle className="w-4 h-4" /> Opslaan mislukt. Ben je ingelogd?
+                                <AlertCircle className="w-4 h-4" /> {language === 'nl' ? 'Opslaan mislukt. Ben je ingelogd?' : 'Save failed. Are you logged in?'}
                             </motion.div>
                         )}
-                        {loading && <p className="text-xl text-gray-500 animate-pulse">De beste opties worden berekend...</p>}
+                        {loading && <p className="text-xl text-gray-500 animate-pulse">{language === 'nl' ? 'De beste opties worden berekend...' : 'Calculating the best options...'}</p>}
                     </div>
 
                     {/* Content */}
@@ -511,8 +524,8 @@ export const RecommendationWizardV2: React.FC = () => {
                         </div>
                     ) : results.length === 0 ? (
                         <div className="text-center py-20">
-                            <p className="text-2xl text-gray-500">Geen modules gevonden die aan jouw eisen voldoen.</p>
-                            <button onClick={restart} className="mt-8 text-avans-red font-bold underline text-lg">Probeer het opnieuw</button>
+                            <p className="text-2xl text-gray-500">{t('wizard.noResults')}</p>
+                            <button onClick={restart} className="mt-8 text-avans-red font-bold underline text-lg">{t('wizard.tryAgain')}</button>
                         </div>
                     ) : (
                         <div className="space-y-16">
@@ -523,7 +536,7 @@ export const RecommendationWizardV2: React.FC = () => {
                             </div>
                             <div className="flex justify-center pb-20">
                                 <button onClick={restart} className="flex items-center gap-3 px-8 py-4 bg-white dark:bg-gray-800 shadow-xl rounded-full font-bold text-gray-900 dark:text-white hover:scale-105 transition-all">
-                                    <RefreshCw className="w-5 h-5" /> Nieuwe zoekopdracht
+                                    <RefreshCw className="w-5 h-5" /> {language === 'nl' ? 'Nieuwe zoekopdracht' : 'New search'}
                                 </button>
                             </div>
                         </div>
