@@ -344,7 +344,7 @@ export default function BrowsePage() {
         transition={{ duration: 0.6 }}
       >
         <div className="flex flex-col gap-3">
-          <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl lg:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-primary sm:text-4xl lg:text-5xl">
             Browse Vrije Keuze Modules
           </h1>
           <p className="text-base text-text-secondary-light dark:text-text-secondary-dark md:text-lg">
