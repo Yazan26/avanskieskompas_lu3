@@ -119,7 +119,7 @@ export default function AuthForm() {
   return (
     <div className="w-full max-w-md p-8 rounded-2xl bg-white/95 dark:bg-[#1c2127]/95 backdrop-blur-md shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold text-[var(--color-primary)]">
           {mode === "login" ? "Welkom Terug" : "Account Aanmaken"}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mt-2">

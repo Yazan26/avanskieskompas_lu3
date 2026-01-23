@@ -57,7 +57,7 @@ export default function FaqPage() {
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
               FAQ
             </p>
-            <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-black tracking-tight text-transparent md:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-black tracking-tight text-primary md:text-5xl lg:text-6xl">
               Helpcentrum
             </h1>
           </div>

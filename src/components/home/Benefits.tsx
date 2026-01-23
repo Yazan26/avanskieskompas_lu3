@@ -44,7 +44,7 @@ export default function Benefits() {
       >
         <h2 className="max-w-[720px] text-3xl font-bold leading-tight tracking-tight md:text-4xl md:font-black md:tracking-[-0.033em] lg:text-5xl">
           De Voordelen van het{' '}
-          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <span className="text-primary">
             Keuze Kompas
           </span>
         </h2>

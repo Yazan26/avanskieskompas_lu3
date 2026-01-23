@@ -19,7 +19,7 @@ export default function Hero() {
       >
         <div className="flex flex-col gap-4 text-left">
           <motion.h1 
-            className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-4xl font-black leading-tight tracking-[-0.033em] text-transparent md:text-5xl lg:text-6xl animate-gradient"
+            className="text-4xl font-black leading-tight tracking-[-0.033em] text-primary md:text-5xl lg:text-6xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
